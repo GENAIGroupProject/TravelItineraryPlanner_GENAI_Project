@@ -1,0 +1,94 @@
+{
+  "attraction_generation": {
+    "base_template": "You are a travel planning assistant. The user wants a trip to {city}. REFINED USER PROFILE: {refined_profile} CONSTRAINTS: - With children: {with_children} - With disabled traveler: {with_disabled} - Budget (entire trip, group): {budget} EUR - People: {people} Propose EXACTLY 10 candidate attractions in {city} that match the user's interests and constraints.",
+    
+    "output_format": {
+      "description": "For each attraction, output an object with: name, short_description, approx_price_per_person (number in EUR), tags (array of strings), reason_for_user (one sentence explaining why this matches the profile).",
+      "example": [
+        {
+          "name": "Louvre Museum",
+          "short_description": "World's largest art museum",
+          "approx_price_per_person": 17,
+          "tags": ["museum", "art", "wheelchair_friendly"],
+          "reason_for_user": "Perfect for art lovers with extensive historical collections"
+        }
+      ]
+    },
+    
+    "tag_categories": {
+      "activity_type": ["museum", "gallery", "park", "garden", "beach", "mountain", "shopping", "market"],
+      "historical_period": ["ancient", "medieval", "renaissance", "baroque", "modern", "contemporary"],
+      "accessibility": ["wheelchair_friendly", "kid_friendly", "family_friendly", "pet_friendly"],
+      "price_level": ["free", "budget", "moderate", "luxury"],
+      "time_of_day": ["morning", "afternoon", "evening", "nightlife"],
+      "duration": ["quick_visit", "half_day", "full_day"]
+    },
+    
+    "city_specific_templates": {
+      "Rome": {
+        "focus_areas": ["ancient_rome", "renaissance_art", "catholic_churches", "italian_cuisine", "piazzas_fountains"],
+        "must_includes": ["Colosseum", "Roman Forum", "Pantheon", "Vatican"],
+        "themes": ["ancient_history", "roman_empire", "baroque_art", "catholic_heritage"]
+      },
+      
+      "Paris": {
+        "focus_areas": ["art_museums", "architecture", "french_cuisine", "gardens", "fashion"],
+        "must_includes": ["Eiffel Tower", "Louvre", "Notre-Dame", "Montmartre"],
+        "themes": ["art_history", "gothic_architecture", "romantic_city", "haute_cuisine"]
+      },
+      
+      "London": {
+        "focus_areas": ["museums", "royal_palaces", "theater", "parks", "history"],
+        "must_includes": ["British Museum", "Tower of London", "Buckingham Palace", "Westminster Abbey"],
+        "themes": ["british_history", "royalty", "world_culture", "victorian_architecture"]
+      },
+      
+      "general_city": {
+        "focus_areas": ["main_attractions", "local_culture", "food_drink", "architecture", "nature"],
+        "suggested_structure": [
+          "1-2 major landmarks",
+          "2-3 museums/cultural sites",
+          "1-2 parks/natural areas",
+          "1-2 local experiences",
+          "1-2 food/drink venues",
+          "1 evening/night activity"
+        ]
+      }
+    },
+    
+    "constraint_handling": {
+      "with_children": {
+        "tag_requirements": ["kid_friendly", "family_friendly"],
+        "avoid_tags": ["nightlife", "adult_only"],
+        "suggested_types": ["parks", "zoos", "interactive_museums", "family_shows"]
+      },
+      
+      "with_disabled": {
+        "tag_requirements": ["wheelchair_friendly", "accessible"],
+        "considerations": ["step-free_access", "elevator_availability", "accessible_restrooms"],
+        "suggested_types": ["modern_museums", "parks_with_paths", "guided_tours"]
+      },
+      
+      "budget_constrained": {
+        "tag_requirements": ["free", "budget"],
+        "suggestions": ["free_museums", "public_parks", "free_walking_tours", "public_viewpoints"],
+        "price_ranges": {
+          "free": 0,
+          "budget": "1-10 EUR",
+          "moderate": "11-25 EUR",
+          "expensive": "26+ EUR"
+        }
+      }
+    },
+    
+    "prompt_variations": {
+      "detailed": "Provide detailed descriptions including best time to visit, typical duration, and unique features.",
+      
+      "concise": "Provide brief, essential information only.",
+      
+      "theme_based": "Focus on attractions related to specific themes: {themes}.",
+      
+      "seasonal": "Consider current season {season} and recommend appropriate attractions."
+    }
+  }
+}

@@ -1,0 +1,150 @@
+{
+  "evaluation_criteria": {
+    "interest_match": {
+      "description": "How well the itinerary matches the user's stated interests",
+      "rating_scale": {
+        "1": "Completely unrelated to user interests",
+        "2": "Weak connection to interests",
+        "3": "Some relevant attractions",
+        "4": "Good match with user interests",
+        "5": "Perfectly tailored to user interests"
+      },
+      "considerations": [
+        "Are attractions related to user's stated preferences?",
+        "Does it cover the types of activities mentioned?",
+        "Are there appropriate variations within the interest area?"
+      ]
+    },
+    
+    "budget_realism": {
+      "description": "How realistic the budget allocation is",
+      "rating_scale": {
+        "1": "Far exceeds budget or unrealistic pricing",
+        "2": "Budget strained or questionable pricing",
+        "3": "Reasonable but could be optimized",
+        "4": "Well within budget, good value",
+        "5": "Excellent budget utilization, great value"
+      },
+      "considerations": [
+        "Total cost vs. user budget",
+        "Price distribution across days",
+        "Value for money of selected attractions"
+      ]
+    },
+    
+    "logistics": {
+      "description": "How well the schedule flows",
+      "rating_scale": {
+        "1": "Poor flow, impractical scheduling",
+        "2": "Some logistical issues",
+        "3": "Average flow, workable but not optimal",
+        "4": "Good flow, well-paced",
+        "5": "Excellent flow, optimally paced"
+      },
+      "considerations": [
+        "Balance of activities across time slots",
+        "Realistic time allocation per attraction",
+        "Geographical grouping (if location data available)",
+        "Energy level consideration throughout day"
+      ]
+    },
+    
+    "suitability_for_constraints": {
+      "description": "How well it accommodates user constraints",
+      "rating_scale": {
+        "1": "Ignores or contradicts constraints",
+        "2": "Poor consideration of constraints",
+        "3": "Basic accommodation of constraints",
+        "4": "Good accommodation of constraints",
+        "5": "Excellent, thoughtful accommodation of all constraints"
+      },
+      "considerations": [
+        "Family-friendly if children mentioned",
+        "Accessibility if mobility issues mentioned",
+        "Pace matching user's travel style",
+        "Dietary considerations if mentioned"
+      ]
+    }
+  },
+  
+  "evaluation_prompt_templates": {
+    "basic_evaluation": "You are an impartial travel expert. USER PROFILE: {profile} ITINERARY: {itinerary} Rate from 1 to 5 (integers) on: interest_match, budget_realism, logistics, suitability_for_constraints. Return ONLY JSON with these fields plus a 'comment' field with brief explanation.",
+    
+    "detailed_evaluation": "You are an experienced travel planner evaluating an itinerary. USER PROFILE: {profile} CONSTRAINTS: {constraints} ITINERARY: {itinerary} Provide a detailed evaluation including: 1. Overall assessment 2. Strengths 3. Areas for improvement 4. Specific recommendations. Then provide numerical ratings (1-5) for each criterion.",
+    
+    "comparative_evaluation": "Compare these two itineraries for the same user profile. PROFILE: {profile} ITINERARY_A: {itinerary_a} ITINERARY_B: {itinerary_b} Evaluate which is better and why, then provide ratings for both.",
+    
+    "constraint_focused": "Focus specifically on how well this itinerary handles user constraints. PROFILE: {profile} (pay special attention to constraints: {constraints}) ITINERARY: {itinerary} Evaluate primarily on constraint accommodation, then provide full ratings."
+  },
+  
+  "comment_templates": {
+    "excellent": "Excellent itinerary that perfectly matches user preferences and constraints. Well-paced, budget-appropriate, and comprehensive.",
+    
+    "good": "Good itinerary with strong alignment to user interests. Some minor improvements possible in {area}.",
+    
+    "average": "Reasonable itinerary that covers basic requirements. Could be improved by {suggestions}.",
+    
+    "poor": "This itinerary needs significant improvement. Issues include: {issues}. Recommendations: {recommendations}.",
+    
+    "constraint_specific": {
+      "family": "Family-friendly itinerary with appropriate attractions for children. Good balance of educational and fun activities.",
+      "accessible": "Well-considered accessible itinerary with wheelchair-friendly venues and manageable pacing.",
+      "budget": "Cost-effective itinerary that maximizes value within the budget. Good mix of free and paid attractions.",
+      "pace": "Well-paced itinerary matching the user's preferred travel speed. Good balance of activities and rest."
+    }
+  },
+  
+  "improvement_suggestions": {
+    "budget": [
+      "Consider adding more free attractions",
+      "Replace expensive attractions with similar budget options",
+      "Adjust schedule to include more cost-effective days"
+    ],
+    
+    "logistics": [
+      "Group geographically closer attractions together",
+      "Adjust timing to avoid rush hours",
+      "Add more rest time between activities",
+      "Consider travel time between locations"
+    ],
+    
+    "interest_match": [
+      "Include more attractions related to user's specific interests",
+      "Add variety within the interest area",
+      "Consider related interests that might appeal"
+    ],
+    
+    "constraints": [
+      "Add more family-friendly options",
+      "Include more accessible venues",
+      "Adjust pace to be more relaxed/intense",
+      "Consider dietary restrictions in food recommendations"
+    ]
+  },
+  
+  "rating_guidelines": {
+    "when_to_give_5": [
+      "Perfect alignment with all user preferences",
+      "Exceptional value for budget",
+      "Optimal pacing and flow",
+      "Thoughtful accommodation of all constraints",
+      "Creative and comprehensive planning"
+    ],
+    
+    "when_to_give_1": [
+      "Completely ignores user preferences",
+      "Grossly exceeds budget",
+      "Impractical or impossible schedule",
+      "Ignores important constraints",
+      "Major factual errors in recommendations"
+    ],
+    
+    "factors_to_consider": [
+      "Overall coherence of the plan",
+      "Practical feasibility",
+      "Novelty and creativity",
+      "Local knowledge demonstrated",
+      "Attention to detail"
+    ]
+  }
+}
