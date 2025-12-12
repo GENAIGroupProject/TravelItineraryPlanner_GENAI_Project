@@ -16,7 +16,10 @@ class EvaluationAgent:
         prompt = self._create_evaluation_prompt(profile, itinerary)
         
         try:
+            print(f"\n📊 Generating evaluation prompt...")
             raw_response = self.llm_client.generate(prompt, temperature=0.3)
+            print(f"📊 Raw evaluation response:\n{raw_response[:500]}...\n")
+            
             response_data = self.json_parser.parse_response(raw_response)
             
             # Validate scores are in range 1-5
@@ -25,15 +28,29 @@ class EvaluationAgent:
             return EvaluationScores(**response_data)
             
         except Exception as e:
-            print(f"Error evaluating itinerary: {e}")
+            print(f"❌ Error evaluating itinerary: {e}")
+            import traceback
+            traceback.print_exc()
             return self._create_fallback_evaluation()
     
     def _create_evaluation_prompt(self, profile: Dict, itinerary: Dict) -> str:
         """Create evaluation prompt."""
+        # Simplify the profile for evaluation
+        simplified_profile = {
+            "interests": profile.get("refined_profile", "Unknown interests"),
+            "city": profile.get("chosen_city", "Unknown city"),
+            "budget": profile.get("constraints", {}).get("budget", 0),
+            "people": profile.get("constraints", {}).get("people", 1),
+            "constraints": {
+                "with_children": profile.get("constraints", {}).get("with_children", False),
+                "with_disabled": profile.get("constraints", {}).get("with_disabled", False)
+            }
+        }
+        
         return f"""You are an impartial travel expert evaluating a travel itinerary.
 
 USER PROFILE:
-{json.dumps(profile, indent=2)}
+{json.dumps(simplified_profile, indent=2)}
 
 PROPOSED ITINERARY:
 {json.dumps(itinerary, indent=2)}

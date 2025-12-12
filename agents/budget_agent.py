@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Dict
 from utils.data_structures import Attraction
 from config import Config
 
