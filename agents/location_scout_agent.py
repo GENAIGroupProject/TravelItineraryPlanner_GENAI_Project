@@ -20,11 +20,17 @@ class LocationScoutAgent:
         budget = constraints.get("budget", Config.DEFAULT_BUDGET)
         people = constraints.get("people", Config.DEFAULT_PEOPLE)
         
+        # Analyze user preferences from refined_profile
+        user_wants = self._analyze_user_preferences(refined_profile)
+        
         prompt = f"""You are a travel planning assistant.
 The user wants a trip to {city}.
 
-REFINED USER PROFILE:
+USER'S ACTUAL PREFERENCES:
 {refined_profile}
+
+SPECIFIC USER REQUIREMENTS:
+{user_wants}
 
 CONSTRAINTS:
 - With children: {with_children}
@@ -32,25 +38,28 @@ CONSTRAINTS:
 - Budget (entire trip, group): {budget} EUR
 - People: {people}
 
+CRITICAL: Match attractions to user's ACTUAL preferences.
+If user wants hiking/forests/parks - suggest outdoor nature attractions.
+If user does NOT want cultural/historical - avoid museums and historical sites.
+
 Propose EXACTLY 10 candidate attractions in {city} that match the user's interests and constraints.
 
 For each attraction, output an object with:
 - name
 - short_description
 - approx_price_per_person (number in EUR)
-- tags: an array of strings, including some of: "museum", "outdoor", "nightlife",
-        "kid_friendly", "wheelchair_friendly", "food", "viewpoint", "historical", etc.
-- reason_for_user: one sentence explaining why this matches the profile.
+- tags: an array of strings (choose appropriate tags based on user preferences)
+- reason_for_user: one sentence explaining why this matches the ACTUAL profile.
 
 Return ONLY a JSON array of EXACTLY 10 objects (no extra text).
 Example format:
 [
   {{
-    "name": "Louvre Museum",
-    "short_description": "World's largest art museum",
-    "approx_price_per_person": 17,
-    "tags": ["museum", "art", "wheelchair_friendly"],
-    "reason_for_user": "Perfect for art lovers with extensive historical collections"
+    "name": "Forest Hiking Trail",
+    "short_description": "Beautiful trail through ancient forest",
+    "approx_price_per_person": 0,
+    "tags": ["hiking", "forest", "nature", "outdoor", "free"],
+    "reason_for_user": "Perfect for nature lovers who enjoy hiking in forests"
   }},
   {{...}},  // 9 more attractions
 ]
@@ -75,20 +84,6 @@ Example format:
             # Validate and create Attraction objects
             attractions = self._validate_attractions(response_data, city)
             
-            # If too few attractions, use fallback
-            if len(attractions) < 5:
-                print(f"⚠️ Only {len(attractions)} valid attractions generated. Using fallback.")
-                fallback = self.get_fallback_attractions(city)
-                # Combine and remove duplicates
-                all_attractions = attractions + fallback
-                seen_names = set()
-                unique_attractions = []
-                for attr in all_attractions:
-                    if attr.name not in seen_names:
-                        seen_names.add(attr.name)
-                        unique_attractions.append(attr)
-                attractions = unique_attractions[:10]  # Keep only 10
-            
             print(f"🎯 Final: {len(attractions)} attractions ready")
             return attractions[:10]  # Ensure max 10 attractions
             
@@ -96,7 +91,35 @@ Example format:
             print(f"❌ Error generating attractions: {e}")
             import traceback
             traceback.print_exc()
-            return self.get_fallback_attractions(city)
+            # Return empty list instead of fallback
+            return []
+    
+    def _analyze_user_preferences(self, refined_profile: str) -> str:
+        """Analyze user preferences to guide attraction selection."""
+        profile_lower = refined_profile.lower()
+        
+        requirements = []
+        
+        if "hiking" in profile_lower or "forest" in profile_lower or "park" in profile_lower:
+            requirements.append("- MUST INCLUDE: Hiking trails, forests, parks, outdoor nature areas")
+        
+        if "not cultural" in profile_lower or "no cultural" in profile_lower or "not historical" in profile_lower:
+            requirements.append("- MUST AVOID: Museums, historical sites, cultural attractions")
+        elif "cultural" in profile_lower or "museum" in profile_lower or "historical" in profile_lower:
+            requirements.append("- SHOULD INCLUDE: Cultural and historical attractions")
+        
+        if "relaxed" in profile_lower or "slow" in profile_lower:
+            requirements.append("- PREFER: Relaxed pace activities, not crowded/touristy")
+        elif "fast" in profile_lower or "busy" in profile_lower:
+            requirements.append("- PREFER: Active, fast-paced experiences")
+        
+        if "food" in profile_lower or "cuisine" in profile_lower:
+            requirements.append("- INCLUDE: Local food experiences, restaurants, markets")
+        
+        if not requirements:
+            return "No specific requirements detected"
+        
+        return "\n".join(requirements)
     
     def _validate_attractions(self, raw_attractions: List[Dict], city: str) -> List[Attraction]:
         """Validate and convert raw attraction data to Attraction objects."""
@@ -140,121 +163,3 @@ Example format:
                 continue
         
         return validated
-    
-    def get_fallback_attractions(self, city: str) -> List[Attraction]:
-        """Provide fallback attractions when LLM fails."""
-        print(f"🔄 Using fallback attractions for {city}")
-        
-        fallback_data = {
-            "Rome": [
-                {
-                    "name": "Colosseum",
-                    "short_description": "Ancient Roman amphitheater, iconic symbol of Rome",
-                    "approx_price_per_person": 16.0,
-                    "tags": ["historical", "ancient", "architecture", "wheelchair_friendly"],
-                    "reason_for_user": "Perfect for ancient building enthusiasts with rich historical significance"
-                },
-                {
-                    "name": "Roman Forum",
-                    "short_description": "Ancient Roman government center with ruins and temples",
-                    "approx_price_per_person": 12.0,
-                    "tags": ["historical", "ancient", "archaeological", "outdoor"],
-                    "reason_for_user": "Extensive ancient ruins perfect for history lovers"
-                },
-                {
-                    "name": "Pantheon",
-                    "short_description": "Ancient Roman temple with magnificent dome",
-                    "approx_price_per_person": 0.0,
-                    "tags": ["historical", "architecture", "religious", "free"],
-                    "reason_for_user": "Well-preserved ancient building with incredible architecture"
-                },
-                {
-                    "name": "Vatican Museums",
-                    "short_description": "Extensive art collections including Sistine Chapel",
-                    "approx_price_per_person": 17.0,
-                    "tags": ["museum", "art", "religious", "historical"],
-                    "reason_for_user": "World-class museum with historical and artistic treasures"
-                },
-                {
-                    "name": "St. Peter's Basilica",
-                    "short_description": "Renaissance church with dome and religious art",
-                    "approx_price_per_person": 0.0,
-                    "tags": ["religious", "architecture", "historical", "free"],
-                    "reason_for_user": "Magnificent architecture and historical significance"
-                }
-            ],
-            "Paris": [
-                {
-                    "name": "Louvre Museum",
-                    "short_description": "World's largest art museum in historic palace",
-                    "approx_price_per_person": 17.0,
-                    "tags": ["museum", "art", "historical", "palace", "wheelchair_friendly"],
-                    "reason_for_user": "Historical palace building with world's best art collection"
-                },
-                {
-                    "name": "Eiffel Tower",
-                    "short_description": "Iconic iron tower offering city views",
-                    "approx_price_per_person": 25.0,
-                    "tags": ["landmark", "architecture", "viewpoint", "historical"],
-                    "reason_for_user": "Iconic architectural landmark with historical significance"
-                },
-                {
-                    "name": "Notre-Dame Cathedral",
-                    "short_description": "Medieval Catholic cathedral on the Île de la Cité",
-                    "approx_price_per_person": 0.0,
-                    "tags": ["religious", "gothic", "historical", "free"],
-                    "reason_for_user": "Masterpiece of French Gothic architecture"
-                }
-            ],
-            "London": [
-                {
-                    "name": "British Museum",
-                    "short_description": "Museum of human history and culture",
-                    "approx_price_per_person": 0.0,
-                    "tags": ["museum", "history", "free", "wheelchair_friendly"],
-                    "reason_for_user": "Free museum with extensive historical collections"
-                },
-                {
-                    "name": "Tower of London",
-                    "short_description": "Historic castle on the River Thames",
-                    "approx_price_per_person": 29.0,
-                    "tags": ["history", "castle", "landmark"],
-                    "reason_for_user": "Rich historical site with crown jewels"
-                },
-                {
-                    "name": "Westminster Abbey",
-                    "short_description": "Gothic church and site of coronations",
-                    "approx_price_per_person": 24.0,
-                    "tags": ["religious", "gothic", "historical"],
-                    "reason_for_user": "Historical church with royal connections"
-                }
-            ]
-        }
-        
-        if city in fallback_data:
-            attractions = []
-            for attr_dict in fallback_data[city]:
-                try:
-                    attraction = Attraction(**attr_dict)
-                    attractions.append(attraction)
-                except Exception as e:
-                    print(f"Error creating fallback attraction: {e}")
-            return attractions
-        else:
-            # Generic attractions for any city
-            return [
-                Attraction(
-                    name=f"{city} Historical Museum",
-                    short_description="Local museum showcasing city history and ancient artifacts",
-                    approx_price_per_person=12.0,
-                    tags=["museum", "historical", "cultural"],
-                    reason_for_user="Perfect for understanding local history and ancient cultures"
-                ),
-                Attraction(
-                    name=f"{city} Old Town",
-                    short_description="Historic district with ancient buildings and architecture",
-                    approx_price_per_person=0.0,
-                    tags=["historical", "architecture", "walking", "free", "outdoor"],
-                    reason_for_user="Free exploration of ancient buildings and historical architecture"
-                )
-            ]
