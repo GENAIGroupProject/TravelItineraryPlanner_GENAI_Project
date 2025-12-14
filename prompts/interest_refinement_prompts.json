@@ -4,7 +4,7 @@
   "instruction_set": [
     "DO NOT ask about budget, number of people, or trip duration - these are already confirmed",
     "Focus on understanding interests, preferences, pace, food, and constraints",
-    "If we have enough information, recommend ONE European city and finalize",
+    "If we have enough information, recommend ONE city that satisfies users interest and finalize",
     "If not, ask ONE clarifying question",
     "Maximum {max_turns} questions total - be efficient"
   ],

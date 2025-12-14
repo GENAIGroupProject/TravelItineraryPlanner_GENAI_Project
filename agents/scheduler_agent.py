@@ -14,48 +14,75 @@ class SchedulerAgent:
         if days is None:
             days = Config.DEFAULT_DAYS
         
-        # Initialize empty itinerary
+        # If no attractions, return empty itinerary
+        if not attractions:
+            return self._create_empty_itinerary(days)
+        
+        print(f"📅 Scheduler: Creating {days}-day itinerary with {len(attractions)} attractions")
+        
+        # Initialize empty itinerary for all days
         itinerary = {}
-        
-        # Group attractions by type for better distribution
-        museums = [a for a in attractions if "museum" in a.tags]
-        outdoor = [a for a in attractions if "outdoor" in a.tags]
-        landmarks = [a for a in attractions if "landmark" in a.tags]
-        other = [a for a in attractions if a not in museums + outdoor + landmarks]
-        
-        # Create mixed list for better variety
-        mixed_attractions = []
-        max_len = max(len(museums), len(outdoor), len(landmarks), len(other))
-        
-        for i in range(max_len):
-            if i < len(museums):
-                mixed_attractions.append(museums[i])
-            if i < len(outdoor):
-                mixed_attractions.append(outdoor[i])
-            if i < len(landmarks):
-                mixed_attractions.append(landmarks[i])
-            if i < len(other):
-                mixed_attractions.append(other[i])
-        
-        # If mixed list is empty, use original order
-        if not mixed_attractions:
-            mixed_attractions = attractions
-        
-        # Distribute attractions across days and time slots
         for day in range(1, days + 1):
             day_key = f"day{day}"
-            day_slots = {slot: [] for slot in self.time_slots}
-            
-            # Assign attractions to time slots
-            for slot_idx, slot in enumerate(self.time_slots):
-                # Calculate which attraction goes in this slot
-                attraction_idx = ((day - 1) * len(self.time_slots)) + slot_idx
-                if attraction_idx < len(mixed_attractions):
-                    day_slots[slot].append(mixed_attractions[attraction_idx])
-            
-            itinerary[day_key] = DayItinerary(**day_slots)
+            itinerary[day_key] = DayItinerary()
         
-        # Fill CompleteItinerary object
+        # DEBUG: Show what we're working with
+        print(f"  Time slots: {self.time_slots}")
+        print(f"  Days to fill: {days}")
+        
+        # Simple distribution: fill each day's slots in order
+        attraction_idx = 0
+        day_idx = 1
+        
+        while attraction_idx < len(attractions) and day_idx <= days:
+            day_key = f"day{day_idx}"
+            day_itinerary = itinerary[day_key]
+            
+            # Try to fill each time slot for this day
+            for slot in self.time_slots:
+                if attraction_idx >= len(attractions):
+                    break
+                    
+                # Get current slot list
+                slot_list = getattr(day_itinerary, slot)
+                
+                # Add attraction to this slot
+                slot_list.append(attractions[attraction_idx])
+                print(f"  ➡️ Added '{attractions[attraction_idx].name[:30]}...' to day{day_idx} {slot}")
+                attraction_idx += 1
+            
+            # Move to next day
+            day_idx += 1
+        
+        # If we still have attractions and all days are "full" (1 per slot),
+        # add more to existing days
+        if attraction_idx < len(attractions):
+            print(f"  ⚠️ Still have {len(attractions) - attraction_idx} attractions left, adding to existing days")
+            
+            # Distribute remaining attractions evenly across days
+            day_idx = 1
+            while attraction_idx < len(attractions):
+                day_key = f"day{day_idx}"
+                day_itinerary = itinerary[day_key]
+                
+                # Find which slot has the fewest attractions
+                slot_counts = {
+                    "morning": len(day_itinerary.morning),
+                    "afternoon": len(day_itinerary.afternoon),
+                    "evening": len(day_itinerary.evening)
+                }
+                min_slot = min(slot_counts, key=slot_counts.get)
+                
+                # Add to the slot with fewest attractions
+                slot_list = getattr(day_itinerary, min_slot)
+                slot_list.append(attractions[attraction_idx])
+                print(f"  ➕ Added '{attractions[attraction_idx].name[:30]}...' to day{day_idx} {min_slot} (balance)")
+                attraction_idx += 1
+                
+                # Move to next day for next attraction
+                day_idx = (day_idx % days) + 1
+        
+        # Create CompleteItinerary object
         if days == 1:
             return CompleteItinerary(
                 day1=itinerary.get("day1", DayItinerary()),
@@ -73,6 +100,27 @@ class SchedulerAgent:
                 day1=itinerary.get("day1", DayItinerary()),
                 day2=itinerary.get("day2", DayItinerary()),
                 day3=itinerary.get("day3", DayItinerary())
+            )
+    
+    def _create_empty_itinerary(self, days: int) -> CompleteItinerary:
+        """Create an empty itinerary structure."""
+        if days == 1:
+            return CompleteItinerary(
+                day1=DayItinerary(),
+                day2=DayItinerary(),
+                day3=DayItinerary()
+            )
+        elif days == 2:
+            return CompleteItinerary(
+                day1=DayItinerary(),
+                day2=DayItinerary(),
+                day3=DayItinerary()
+            )
+        else:
+            return CompleteItinerary(
+                day1=DayItinerary(),
+                day2=DayItinerary(),
+                day3=DayItinerary()
             )
     
     def optimize_itinerary(self, itinerary: CompleteItinerary) -> CompleteItinerary:

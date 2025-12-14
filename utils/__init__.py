@@ -10,6 +10,7 @@ from .data_structures import (
 )
 from .json_parser import JSONParser
 from .logging_utils import setup_logging, log_step
+from .pydantic_compat import to_dict
 
 __all__ = [
     'LLMClient',
@@ -17,5 +18,6 @@ __all__ = [
     'TravelProfile', 'Attraction', 'DayItinerary', 'CompleteItinerary',
     'EvaluationScores',
     'JSONParser',
-    'setup_logging', 'log_step'
+    'setup_logging', 'log_step',
+    'to_dict'
 ]

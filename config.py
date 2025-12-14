@@ -24,7 +24,7 @@ class Config:
     
     # Thresholds
     SIM_UPDATE_THRESHOLD = 0.75
-    MAX_DIALOGUE_TURNS = 5
+    MAX_DIALOGUE_TURNS = 3
     
     # Performance Settings
     REQUEST_TIMEOUT = 600

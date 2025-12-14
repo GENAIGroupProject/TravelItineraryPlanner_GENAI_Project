@@ -9,7 +9,7 @@ class GooglePlacesAgent:
     
     def __init__(self, api_key: str = None):
         self.api_key = api_key or Config.GOOGLE_API_KEY
-        self.enabled = self.api_key != "AIzaSyANxjWJzD0BetncqmnBp069mfnawH9xO6g"
+        self.enabled = True
     
     def enrich_attractions(self, attractions: List[Attraction], 
                           city: str) -> List[Attraction]:
@@ -38,7 +38,7 @@ class GooglePlacesAgent:
                     continue
                 
                 # Update attraction with enriched data
-                enriched_attraction = self._enrich_attraction(attraction, details)
+                enriched_attraction = self._enrich_attraction(attraction, details, place_id)
                 enriched_attractions.append(enriched_attraction)
                 
                 # Polite delay between requests
@@ -78,7 +78,7 @@ class GooglePlacesAgent:
         url = "https://maps.googleapis.com/maps/api/place/details/json"
         params = {
             "place_id": place_id,
-            "fields": "name,geometry,opening_hours,price_level,types,rating,user_ratings_total",
+            "fields": "name,geometry,opening_hours,price_level,types,rating,user_ratings_total,wheelchair_accessible_entrance",
             "key": self.api_key
         }
         
@@ -95,13 +95,13 @@ class GooglePlacesAgent:
         return None
     
     def _enrich_attraction(self, attraction: Attraction, 
-                          details: Dict) -> Attraction:
+                          details: Dict, place_id: str) -> Attraction:
         """Enrich attraction object with Google Places data."""
         # Create a copy of the attraction to avoid modifying original
         enriched_data = attraction.dict()
         
         # Add Google Places data
-        enriched_data["google_place_id"] = details.get("place_id")
+        enriched_data["google_place_id"] = place_id
         enriched_data["opening_hours"] = details.get("opening_hours")
         enriched_data["google_price_level"] = details.get("price_level")
         enriched_data["location"] = details.get("geometry", {}).get("location")
@@ -121,7 +121,18 @@ class GooglePlacesAgent:
             "point_of_interest": "landmark",
             "historical_landmark": "historical",
             "church": "religious",
-            "restaurant": "food"
+            "restaurant": "food",
+            "cafe": "food",
+            "bar": "food",
+            "zoo": "nature",
+            "aquarium": "nature",
+            "amusement_park": "entertainment",
+            "movie_theater": "entertainment",
+            "shopping_mall": "shopping",
+            "store": "shopping",
+            "night_club": "entertainment",
+            "stadium": "sports",
+            "gym": "sports"
         }
         
         for google_type in google_types:

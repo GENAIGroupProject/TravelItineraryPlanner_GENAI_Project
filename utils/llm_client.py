@@ -1,6 +1,6 @@
 import requests
 import json
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, List
 import time
 from config import Config
 

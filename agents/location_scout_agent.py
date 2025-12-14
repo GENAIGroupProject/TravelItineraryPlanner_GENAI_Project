@@ -1,4 +1,7 @@
 import json
+import os
+import re
+from datetime import datetime
 from typing import List, Dict, Optional
 from utils.llm_client import LLMClient
 from utils.json_parser import JSONParser
@@ -11,7 +14,170 @@ class LocationScoutAgent:
     def __init__(self, llm_client: Optional[LLMClient] = None):
         self.llm_client = llm_client or LLMClient()
         self.json_parser = JSONParser()
+        self.log_dir = "logs"
+        self._ensure_log_dir()
     
+    def _ensure_log_dir(self):
+        """Ensure log directory exists."""
+        if not os.path.exists(self.log_dir):
+            os.makedirs(self.log_dir)
+    
+    def _log_to_file(self, filename: str, content: str, mode: str = 'w'):
+        """Log content to a file."""
+        filepath = os.path.join(self.log_dir, filename)
+        with open(filepath, mode, encoding='utf-8') as f:
+            f.write(content)
+        print(f"📝 Logged to {filepath}")
+    
+    def _log_llm_response(self, city: str, prompt: str, response: str, parsed_data: List):
+        """Log complete LLM interaction for debugging."""
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        filename = f"attractions_{city}_{timestamp}.log"
+        
+        log_content = f"""===========================================
+LOCATION SCOUT DEBUG LOG - {timestamp}
+City: {city}
+===========================================
+
+PROMPT SENT TO LLM:
+{prompt}
+
+{'='*50}
+
+FULL LLM RESPONSE:
+{response}
+
+{'='*50}
+
+RESPONSE STATS:
+- Total length: {len(response)} characters
+- Has opening '[': {'Yes' if '[' in response else 'No'}
+- Has closing ']': {'Yes' if ']' in response else 'No'}
+- Bracket count: {response.count('[')} openings, {response.count(']')} closings
+- Brace count: {response.count('{')} openings, {response.count('}')} closings
+
+{'='*50}
+
+PARSED DATA:
+- Type: {type(parsed_data)}
+- Length: {len(parsed_data) if isinstance(parsed_data, list) else 'N/A'}
+
+{'='*50}
+
+RAW JSON EXTRACTION ATTEMPT:
+"""
+        # Try to extract JSON manually
+        start_idx = response.find('[')
+        end_idx = response.rfind(']')
+        
+        if start_idx != -1 and end_idx != -1 and end_idx > start_idx:
+            json_str = response[start_idx:end_idx + 1]
+            log_content += f"Extracted JSON (chars {start_idx}-{end_idx}):\n{json_str}\n"
+            
+            # Try to parse it
+            try:
+                parsed = json.loads(json_str)
+                log_content += f"\n✅ JSON parsed successfully: {len(parsed)} items\n"
+            except json.JSONDecodeError as e:
+                log_content += f"\n❌ JSON parse error: {e}\n"
+                # Show where it breaks
+                if len(json_str) > 1000:
+                    log_content += f"\nFirst 1000 chars of extracted JSON:\n{json_str[:1000]}\n"
+                    log_content += f"\nLast 500 chars of extracted JSON:\n{json_str[-500:]}\n"
+        else:
+            log_content += "Could not extract JSON array from response\n"
+        
+        self._log_to_file(filename, log_content)
+    
+    def _extract_json_array(self, text: str) -> str:
+        """Extract JSON array from text response."""
+        # Look for the main JSON array (most complete one)
+        matches = re.findall(r'(\[.*\])', text, re.DOTALL)
+        
+        if matches:
+            # Return the longest match (likely the main array)
+            return max(matches, key=len)
+        
+        # If no complete array found, try to find start of array
+        start_idx = text.find('[')
+        if start_idx != -1:
+            # Try to find a matching closing bracket
+            bracket_count = 0
+            for i in range(start_idx, len(text)):
+                if text[i] == '[':
+                    bracket_count += 1
+                elif text[i] == ']':
+                    bracket_count -= 1
+                    if bracket_count == 0:
+                        return text[start_idx:i+1]
+        
+        return ""
+    
+    def _parse_json_safely(self, json_str: str):
+        """Try multiple methods to parse JSON safely."""
+        # Method 1: Direct parse
+        try:
+            data = json.loads(json_str)
+            if isinstance(data, list):
+                return data
+        except json.JSONDecodeError as e:
+            print(f"  JSON parse error (method 1): {e}")
+        
+        # Method 2: Try to fix common issues
+        fixed_json = self._fix_json_issues(json_str)
+        try:
+            data = json.loads(fixed_json)
+            if isinstance(data, list):
+                return data
+        except json.JSONDecodeError as e:
+            print(f"  JSON parse error (method 2): {e}")
+        
+        # Method 3: Extract individual objects
+        try:
+            objects = self._extract_json_objects(json_str)
+            return objects
+        except Exception as e:
+            print(f"  Object extraction error: {e}")
+        
+        return []
+    
+    def _fix_json_issues(self, json_str: str) -> str:
+        """Fix common JSON formatting issues."""
+        # Remove trailing commas before closing braces/brackets
+        json_str = re.sub(r',\s*([}\]])', r'\1', json_str)
+        
+        # Fix missing quotes on keys (simple cases)
+        json_str = re.sub(r'(\{|\,\s*)(\w+)(\s*:)', r'\1"\2"\3', json_str)
+        
+        # Ensure array is properly closed
+        if json_str.count('[') > json_str.count(']'):
+            json_str += ']' * (json_str.count('[') - json_str.count(']'))
+        
+        # Ensure objects are properly closed
+        open_braces = json_str.count('{')
+        close_braces = json_str.count('}')
+        if open_braces > close_braces:
+            json_str += '}' * (open_braces - close_braces)
+        
+        return json_str
+    
+    def _extract_json_objects(self, text: str) -> List[Dict]:
+        """Extract individual JSON objects from text."""
+        objects = []
+        # Find all potential JSON objects
+        pattern = r'\{(?:[^{}]|(?R))*\}'
+        matches = re.findall(pattern, text, re.DOTALL)
+        
+        for match in matches:
+            try:
+                obj = json.loads(match)
+                if isinstance(obj, dict) and 'name' in obj:
+                    objects.append(obj)
+            except json.JSONDecodeError:
+                continue
+        
+        return objects
+
     def generate_attractions(self, city: str, refined_profile: str, 
                            constraints: Dict) -> List[Attraction]:
         """Generate attractions for the chosen city."""
@@ -51,7 +217,7 @@ For each attraction, output an object with:
 - tags: an array of strings (choose appropriate tags based on user preferences)
 - reason_for_user: one sentence explaining why this matches the ACTUAL profile.
 
-Return ONLY a JSON array of EXACTLY 10 objects (no extra text).
+IMPORTANT: Return ONLY a JSON array of EXACTLY 10 objects. Do NOT include any text before or after the JSON array.
 Example format:
 [
   {{
@@ -61,25 +227,36 @@ Example format:
     "tags": ["hiking", "forest", "nature", "outdoor", "free"],
     "reason_for_user": "Perfect for nature lovers who enjoy hiking in forests"
   }},
-  {{...}},  // 9 more attractions
+  {{...}}  // 9 more attractions
 ]
 """
 
         try:
             raw_response = self.llm_client.generate(prompt, temperature=0.8)
-            print(f"\n🔍 Raw LLM response for attractions:\n{raw_response[:500]}...\n")
             
-            response_data = self.json_parser.parse_response(raw_response)
+            # Print full response length
+            print(f"\n🔍 LLM Response Stats:")
+            print(f"  Total length: {len(raw_response)} characters")
+            print(f"  Preview (first 100 chars): {raw_response[:100]}")
             
-            # Convert to list if needed
-            if not isinstance(response_data, list):
-                print(f"⚠️ Response is not a list, type: {type(response_data)}")
-                if isinstance(response_data, dict):
-                    response_data = [response_data]
-                else:
-                    response_data = []
             
-            print(f"✅ Parsed {len(response_data)} attractions from LLM")
+            
+            # Try to extract JSON
+            json_str = self._extract_json_array(raw_response)
+            
+            if json_str:
+                print(f"✅ Extracted JSON string ({len(json_str)} chars)")
+                
+                # Try to parse with multiple methods
+                response_data = self._parse_json_safely(json_str)
+            else:
+                print("❌ No JSON array found in response")
+                response_data = []
+            
+            print(f"✅ Parsed {len(response_data) if isinstance(response_data, list) else 0} attractions from LLM")
+            
+            # Log everything to file for debugging
+            self._log_llm_response(city, prompt, raw_response, response_data)
             
             # Validate and create Attraction objects
             attractions = self._validate_attractions(response_data, city)
@@ -93,7 +270,7 @@ Example format:
             traceback.print_exc()
             # Return empty list instead of fallback
             return []
-    
+
     def _analyze_user_preferences(self, refined_profile: str) -> str:
         """Analyze user preferences to guide attraction selection."""
         profile_lower = refined_profile.lower()

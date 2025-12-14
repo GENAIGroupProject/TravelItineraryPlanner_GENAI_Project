@@ -1,7 +1,7 @@
 import logging
 import time
 from datetime import datetime
-from typing import Optional
+from typing import Optional, Dict
 
 def setup_logging(log_file: str = "travel_planner.log", 
                  console_level: int = logging.INFO,
