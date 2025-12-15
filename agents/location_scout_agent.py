@@ -7,6 +7,7 @@ from utils.llm_client import LLMClient
 from utils.json_parser import JSONParser
 from utils.data_structures import Attraction
 from config import Config
+from utils.logging_utils import log_agent_communication, log_step
 
 class LocationScoutAgent:
     """Agent for generating attractions in a chosen city."""
@@ -23,14 +24,14 @@ class LocationScoutAgent:
             os.makedirs(self.log_dir)
     
     def _log_to_file(self, filename: str, content: str, mode: str = 'w'):
-        """Log content to a file."""
+        """Log content to a file for detailed debugging."""
         filepath = os.path.join(self.log_dir, filename)
         with open(filepath, mode, encoding='utf-8') as f:
             f.write(content)
-        print(f"📝 Logged to {filepath}")
+        print(f"📝 Detailed log saved to {filepath}")
     
     def _log_llm_response(self, city: str, prompt: str, response: str, parsed_data: List):
-        """Log complete LLM interaction for debugging."""
+        """Log complete LLM interaction for debugging to separate file."""
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         filename = f"attractions_{city}_{timestamp}.log"
         
@@ -51,41 +52,15 @@ FULL LLM RESPONSE:
 
 RESPONSE STATS:
 - Total length: {len(response)} characters
-- Has opening '[': {'Yes' if '[' in response else 'No'}
-- Has closing ']': {'Yes' if ']' in response else 'No'}
-- Bracket count: {response.count('[')} openings, {response.count(']')} closings
-- Brace count: {response.count('{')} openings, {response.count('}')} closings
+- Parsed attractions: {len(parsed_data) if isinstance(parsed_data, list) else 'N/A'}
 
 {'='*50}
 
 PARSED DATA:
-- Type: {type(parsed_data)}
-- Length: {len(parsed_data) if isinstance(parsed_data, list) else 'N/A'}
-
-{'='*50}
-
-RAW JSON EXTRACTION ATTEMPT:
 """
-        # Try to extract JSON manually
-        start_idx = response.find('[')
-        end_idx = response.rfind(']')
-        
-        if start_idx != -1 and end_idx != -1 and end_idx > start_idx:
-            json_str = response[start_idx:end_idx + 1]
-            log_content += f"Extracted JSON (chars {start_idx}-{end_idx}):\n{json_str}\n"
-            
-            # Try to parse it
-            try:
-                parsed = json.loads(json_str)
-                log_content += f"\n✅ JSON parsed successfully: {len(parsed)} items\n"
-            except json.JSONDecodeError as e:
-                log_content += f"\n❌ JSON parse error: {e}\n"
-                # Show where it breaks
-                if len(json_str) > 1000:
-                    log_content += f"\nFirst 1000 chars of extracted JSON:\n{json_str[:1000]}\n"
-                    log_content += f"\nLast 500 chars of extracted JSON:\n{json_str[-500:]}\n"
-        else:
-            log_content += "Could not extract JSON array from response\n"
+        if isinstance(parsed_data, list) and parsed_data:
+            for i, attraction in enumerate(parsed_data[:5]):  # Log first 5
+                log_content += f"\n{i+1}. {attraction.get('name', 'Unknown')}\n"
         
         self._log_to_file(filename, log_content)
     
@@ -181,10 +156,30 @@ RAW JSON EXTRACTION ATTEMPT:
     def generate_attractions(self, city: str, refined_profile: str, 
                            constraints: Dict) -> List[Attraction]:
         """Generate attractions for the chosen city."""
+        log_step("LOCATION_SCOUT", f"Generating attractions for {city}")
+        
         with_children = constraints.get("with_children", False)
         with_disabled = constraints.get("with_disabled", False)
         budget = constraints.get("budget", Config.DEFAULT_BUDGET)
         people = constraints.get("people", Config.DEFAULT_PEOPLE)
+        
+        # Log agent communication to unified log
+        log_agent_communication(
+            from_agent="LocationScoutAgent",
+            to_agent="LLM",
+            message_type="attraction_generation_request",
+            data={
+                "city": city,
+                "refined_profile": refined_profile[:200],  # Truncate for logging
+                "constraints": {
+                    "with_children": with_children,
+                    "with_disabled": with_disabled,
+                    "budget": budget,
+                    "people": people
+                }
+            },
+            city=city
+        )
         
         # Analyze user preferences from refined_profile
         user_wants = self._analyze_user_preferences(refined_profile)
@@ -237,9 +232,9 @@ Example format:
             # Print full response length
             print(f"\n🔍 LLM Response Stats:")
             print(f"  Total length: {len(raw_response)} characters")
-            print(f"  Preview (first 100 chars): {raw_response[:100]}")
             
-            
+            # Log to unified log
+            log_step("LLM", f"Received response of {len(raw_response)} chars for {city}")
             
             # Try to extract JSON
             json_str = self._extract_json_array(raw_response)
@@ -253,21 +248,54 @@ Example format:
                 print("❌ No JSON array found in response")
                 response_data = []
             
-            print(f"✅ Parsed {len(response_data) if isinstance(response_data, list) else 0} attractions from LLM")
+            parsed_count = len(response_data) if isinstance(response_data, list) else 0
+            print(f"✅ Parsed {parsed_count} attractions from LLM")
             
-            # Log everything to file for debugging
+            # Log LLM response for debugging (separate file)
             self._log_llm_response(city, prompt, raw_response, response_data)
+            
+            # Log agent communication - response received (unified log)
+            log_agent_communication(
+                from_agent="LLM",
+                to_agent="LocationScoutAgent",
+                message_type="attraction_generation_response",
+                data={
+                    "raw_response_length": len(raw_response),
+                    "parsed_count": parsed_count,
+                    "sample_attractions": response_data[:2] if response_data else []
+                },
+                city=city
+            )
             
             # Validate and create Attraction objects
             attractions = self._validate_attractions(response_data, city)
             
-            print(f"🎯 Final: {len(attractions)} attractions ready")
+            log_step("LOCATION_SCOUT", f"Generated {len(attractions)} attractions for {city}")
+            
+            # Log final attractions to unified log
+            log_agent_communication(
+                from_agent="LocationScoutAgent",
+                to_agent="BudgetAgent",
+                message_type="attractions_output",
+                data={
+                    "city": city,
+                    "attraction_count": len(attractions),
+                    "attraction_names": [attr.name[:30] for attr in attractions[:5]]
+                },
+                city=city
+            )
+            
             return attractions[:10]  # Ensure max 10 attractions
             
         except Exception as e:
-            print(f"❌ Error generating attractions: {e}")
+            error_msg = f"Error generating attractions: {e}"
+            print(f"❌ {error_msg}")
             import traceback
             traceback.print_exc()
+            
+            # Log error to unified log
+            log_step("LOCATION_SCOUT", error_msg, level="error")
+            
             # Return empty list instead of fallback
             return []
 

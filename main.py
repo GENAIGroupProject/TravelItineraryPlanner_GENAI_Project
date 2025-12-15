@@ -24,6 +24,7 @@ try:
             log_performance_with_threshold
         )
         LOGGING_AVAILABLE = True
+        print("✅ Logging utilities loaded successfully")
     except ImportError as e:
         print(f"Logging utils import error: {e}")
         print("Creating simple fallback formatters...")
@@ -63,6 +64,10 @@ try:
         
         def log_to_file_only(*args, **kwargs):
             pass  # Do nothing in fallback mode
+        
+        def setup_logging():
+            print("Simple logging setup")
+            return None
     
     # Import agents
     try:
@@ -75,6 +80,7 @@ try:
         from agents.google_places_agent import GooglePlacesAgent
         from utils.data_structures import PreferenceState, TripConstraints, TravelProfile
         AGENTS_AVAILABLE = True
+        print("✅ All agents loaded successfully")
     except ImportError as e:
         print(f"Error importing agents: {e}")
         AGENTS_AVAILABLE = False
@@ -94,6 +100,10 @@ class TravelPlanner:
     def __init__(self):
         if LOGGING_AVAILABLE:
             self.logger = setup_logging()
+            if self.logger:
+                print("✅ Logger initialized")
+            else:
+                print("⚠️ Logger setup returned None")
         else:
             self.logger = None
         
@@ -116,10 +126,13 @@ class TravelPlanner:
     
     def show_header(self):
         """Display application header."""
-        if hasattr(ConsoleFormatter, 'clear_screen'):
-            ConsoleFormatter.clear_screen()
-        elif LOGGING_AVAILABLE:
-            clear_screen()
+        try:
+            if hasattr(ConsoleFormatter, 'clear_screen'):
+                ConsoleFormatter.clear_screen()
+            elif LOGGING_AVAILABLE:
+                clear_screen()
+        except:
+            print("\n" * 50)  # Fallback to newlines
         
         print("=" * 60)
         print("           🌍 TRAVEL ITINERARY PLANNER 🌍")
@@ -128,10 +141,15 @@ class TravelPlanner:
     
     def log_to_file(self, category: str, message: str):
         """Log message to file only."""
-        log_to_file_only(f"[{category}] {message}", "info")
+        try:
+            log_to_file_only(f"[{category}] {message}", "info")
+        except:
+            # Fallback logging
+            with open("travel_planner.log", "a", encoding="utf-8") as f:
+                f.write(f"[{category}] {message}\n")
     
     def collect_basic_info(self) -> Dict:
-        """Collect basic trip information in a user-friendly way."""
+        """Collect basic trip information including constraints."""
         self.show_header()
         print(ConsoleFormatter.travel("Let's plan your dream trip! 🎉"))
         print()
@@ -150,13 +168,37 @@ class TravelPlanner:
             days = int(days_input) if days_input.strip() else Config.DEFAULT_DAYS
             
             print()
+            print("👥 Traveler Constraints")
+            print("─" * 40)
+            
+            # Ask about children
+            children_input = input("   Will there be children traveling? (yes/no, press Enter for no): ")
+            with_children = children_input.lower().strip() in ['yes', 'y', '1', 'true']
+            
+            # Ask about disabilities
+            disability_input = input("   Any travelers with mobility/disability needs? (yes/no, press Enter for no): ")
+            with_disabled = disability_input.lower().strip() in ['yes', 'y', '1', 'true']
+            
+            print()
             print(ConsoleFormatter.success(f"Planning {days}-day trip for {people} traveler(s)"))
             print(ConsoleFormatter.success(f"Budget: {budget}€"))
+            if with_children:
+                print(ConsoleFormatter.info("✓ Traveling with children"))
+            if with_disabled:
+                print(ConsoleFormatter.info("✓ Accessibility needs considered"))
             
             # Log to file only
             self.log_to_file("USER_INPUT", f"Budget: {budget}, People: {people}, Days: {days}")
+            self.log_to_file("USER_INPUT", f"With children: {with_children}")
+            self.log_to_file("USER_INPUT", f"With disabled: {with_disabled}")
             
-            return {"budget": budget, "people": people, "days": days}
+            return {
+                "budget": budget, 
+                "people": people, 
+                "days": days,
+                "with_children": with_children,
+                "with_disabled": with_disabled
+            }
             
         except ValueError as e:
             print(ConsoleFormatter.error(f"Invalid input: {e}"))
@@ -164,16 +206,28 @@ class TravelPlanner:
             return {
                 "budget": Config.DEFAULT_BUDGET,
                 "people": Config.DEFAULT_PEOPLE,
-                "days": Config.DEFAULT_DAYS
+                "days": Config.DEFAULT_DAYS,
+                "with_children": False,
+                "with_disabled": False
             }
     
-    def run_interest_dialogue(self, budget: float, people: int, days: int):
+    def run_interest_dialogue(self, basic_info: Dict):
         """Run interest refinement dialogue with better UX."""
+        budget = basic_info["budget"]
+        people = basic_info["people"]
+        days = basic_info["days"]
+        with_children = basic_info["with_children"]
+        with_disabled = basic_info["with_disabled"]
+        
         self.show_header()
         print(ConsoleFormatter.travel(f"Planning your {days}-day adventure! 🌟"))
         print()
         print(f"💰 Budget: {budget}€")
         print(f"👥 Travelers: {people}")
+        if with_children:
+            print(f"👶 Children: Yes")
+        if with_disabled:
+            print(f"♿ Accessibility needs: Yes")
         print()
         print("=" * 60)
         print()
@@ -231,6 +285,9 @@ class TravelPlanner:
             
             elif response and response.get("action") == "finalize":
                 with LoadingSpinner("Creating your travel profile"):
+                    # Add constraints to response
+                    response["constraints"]["with_children"] = with_children
+                    response["constraints"]["with_disabled"] = with_disabled
                     profile = self.interest_agent.create_final_profile(self.state, response)
                 
                 print()
@@ -242,6 +299,7 @@ class TravelPlanner:
                 # Log profile details to file
                 self.log_to_file("PROFILE", f"City: {profile.chosen_city}")
                 self.log_to_file("PROFILE", f"Profile: {profile.refined_profile}")
+                self.log_to_file("PROFILE", f"Constraints: Children={with_children}, Disabled={with_disabled}")
                 
                 return profile
         
@@ -261,8 +319,8 @@ class TravelPlanner:
                 "refined_profile": user_preferences,
                 "chosen_city": None,
                 "constraints": {
-                    "with_children": False,
-                    "with_disabled": False,
+                    "with_children": with_children,
+                    "with_disabled": with_disabled,
                     "budget": budget,
                     "people": people
                 },
@@ -294,11 +352,13 @@ class TravelPlanner:
         budget = basic_info["budget"]
         people = basic_info["people"]
         days = basic_info["days"]
+        with_children = basic_info["with_children"]
+        with_disabled = basic_info["with_disabled"]
         
         # Step 2: Interest refinement
         print()
         input("Press Enter to tell me about your travel preferences...")
-        profile = self.run_interest_dialogue(budget, people, days)
+        profile = self.run_interest_dialogue(basic_info)
         
         if not profile:
             print(ConsoleFormatter.error("Failed to create profile. Please try again."))
@@ -375,12 +435,39 @@ class TravelPlanner:
         print(ConsoleFormatter.success("Your travel plan is ready!"))
         self.log_to_file("COMPLETION", "Planning completed successfully")
     
+    def _format_opening_hours(self, opening_hours: Dict) -> str:
+        """Format opening hours from Google Places API."""
+        if not opening_hours:
+            return "Opening hours not available"
+        
+        try:
+            if opening_hours.get("open_now") is not None:
+                open_now = "Open now" if opening_hours["open_now"] else "Closed now"
+            else:
+                open_now = ""
+            
+            periods = opening_hours.get("periods", [])
+            if periods:
+                today_schedule = []
+                for period in periods[:2]:  # Show first two periods
+                    open_time = period.get("open", {}).get("time", "")
+                    close_time = period.get("close", {}).get("time", "")
+                    if open_time and close_time:
+                        # Format time from 0900 to 09:00
+                        open_formatted = f"{open_time[:2]}:{open_time[2:]}"
+                        close_formatted = f"{close_time[:2]}:{close_time[2:]}"
+                        today_schedule.append(f"{open_formatted}-{close_formatted}")
+                
+                if today_schedule:
+                    return f"{open_now} ({', '.join(today_schedule)})"
+            
+            return open_now if open_now else "Opening hours not available"
+        except:
+            return "Opening hours available"
+    
     def display_results(self, profile, itinerary, evaluation, attractions):
-        """Display final results in a user-friendly format."""
-        if hasattr(self, 'show_header'):
-            self.show_header()
-        else:
-            print("\n" * 3)
+        """Display final results in a user-friendly format with Google Places info."""
+        self.show_header()
         
         print("=" * 60)
         print("           ✨ YOUR TRAVEL PLAN IS READY! ✨")
@@ -392,6 +479,10 @@ class TravelPlanner:
         print("─" * 40)
         print(f"📍 Destination: {profile.chosen_city}")
         print(f"👥 Travelers: {profile.constraints.people}")
+        if profile.constraints.with_children:
+            print(f"👶 Includes children")
+        if profile.constraints.with_disabled:
+            print(f"♿ Accessibility considered")
         
         # Count days with content
         itinerary_dict = itinerary.model_dump() if hasattr(itinerary, 'model_dump') else itinerary
@@ -418,7 +509,7 @@ class TravelPlanner:
         
         print()
         
-        # Display itinerary
+        # Display itinerary with Google Places info
         print(ConsoleFormatter.travel("DAILY ITINERARY"))
         print("─" * 40)
         
@@ -437,15 +528,42 @@ class TravelPlanner:
                             if hasattr(attr, 'get'):
                                 name = attr.get('name', 'Unknown')
                                 cost = attr.get('final_price_estimate', 0) or 0
+                                rating = attr.get('google_rating')
+                                opening_hours = attr.get('opening_hours')
+                                place_id = attr.get('google_place_id')
+                                tags = attr.get('tags', [])
                             else:
                                 name = getattr(attr, 'name', 'Unknown')
                                 cost = getattr(attr, 'final_price_estimate', 0) or 0
+                                rating = getattr(attr, 'google_rating', None)
+                                opening_hours = getattr(attr, 'opening_hours', None)
+                                place_id = getattr(attr, 'google_place_id', None)
+                                tags = getattr(attr, 'tags', [])
                             
+                            # Display basic info
                             if profile.constraints.people > 1:
                                 cost_per_person = cost / profile.constraints.people
-                                print(f"    • {name} ({cost_per_person:.1f}€ per person)")
+                                cost_str = f"({cost_per_person:.1f}€ per person)"
                             else:
-                                print(f"    • {name} ({cost:.1f}€)")
+                                cost_str = f"({cost:.1f}€)"
+                            
+                            print(f"    • {name} {cost_str}")
+                            
+                            # Display Google Places info if available
+                            if rating:
+                                print(f"      ⭐ Rating: {rating}/5")
+                            
+                            if opening_hours:
+                                hours_str = self._format_opening_hours(opening_hours)
+                                print(f"      🕒 {hours_str}")
+                            
+                            if place_id:
+                                print(f"      📍 Google Places ID: {place_id[:20]}...")
+                            
+                            if tags:
+                                print(f"      🏷️  Tags: {', '.join(tags[:3])}")
+                            
+                            print()  # Blank line between attractions
         
         print()
         
@@ -489,9 +607,9 @@ class TravelPlanner:
         self.log_to_file("FINAL_PLAN", f"Evaluation comment: {evaluation.comment}")
         
         # Save itinerary to JSON file
-        self.save_itinerary_to_file(profile, itinerary, evaluation, total_cost)
+        self.save_itinerary_to_file(profile, itinerary, evaluation, total_cost, attractions)
     
-    def save_itinerary_to_file(self, profile, itinerary, evaluation, total_cost):
+    def save_itinerary_to_file(self, profile, itinerary, evaluation, total_cost, attractions):
         """Save the complete itinerary to a JSON file."""
         import json
         from datetime import datetime
@@ -515,12 +633,33 @@ class TravelPlanner:
             else:
                 evaluation_dict = evaluation
             
+            # Prepare attractions data
+            attractions_data = []
+            for attr in attractions:
+                if hasattr(attr, 'model_dump'):
+                    attr_dict = attr.model_dump()
+                else:
+                    attr_dict = {
+                        'name': getattr(attr, 'name', 'Unknown'),
+                        'description': getattr(attr, 'short_description', ''),
+                        'price': getattr(attr, 'final_price_estimate', 0),
+                        'rating': getattr(attr, 'google_rating', None),
+                        'opening_hours': getattr(attr, 'opening_hours', None),
+                        'place_id': getattr(attr, 'google_place_id', None),
+                        'tags': getattr(attr, 'tags', [])
+                    }
+                attractions_data.append(attr_dict)
+            
             data = {
                 "metadata": {
                     "generated": datetime.now().isoformat(),
                     "destination": profile.chosen_city,
                     "travelers": profile.constraints.people if hasattr(profile.constraints, 'people') else 1,
                     "days": 3,
+                    "constraints": {
+                        "with_children": getattr(profile.constraints, 'with_children', False),
+                        "with_disabled": getattr(profile.constraints, 'with_disabled', False)
+                    },
                     "budget": {
                         "total": profile.constraints.budget if hasattr(profile.constraints, 'budget') else 0,
                         "estimated_cost": total_cost,
@@ -528,6 +667,7 @@ class TravelPlanner:
                     }
                 },
                 "profile": profile_dict,
+                "attractions": attractions_data,
                 "itinerary": itinerary_dict,
                 "evaluation": {
                     "scores": evaluation_dict,
@@ -540,6 +680,7 @@ class TravelPlanner:
             print()
             print(ConsoleFormatter.info(f"Itinerary saved to: {filename}"))
         except Exception as e:
+            print(f"⚠️ Failed to save itinerary: {e}")
             self.log_to_file("ERROR", f"Failed to save itinerary: {e}")
 
 def main():

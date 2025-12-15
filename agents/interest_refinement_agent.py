@@ -4,6 +4,7 @@ from utils.llm_client import LLMClient
 from utils.json_parser import JSONParser
 from utils.data_structures import PreferenceState, TripConstraints, TravelProfile
 from config import Config
+from utils.logging_utils import log_step, log_agent_communication, log_agent_output
 
 class InterestRefinementAgent:
     """Agent for refining user interests and selecting destination city."""
@@ -12,6 +13,7 @@ class InterestRefinementAgent:
         self.llm_client = llm_client or LLMClient()
         self.json_parser = JSONParser()
         self.max_turns = Config.MAX_DIALOGUE_TURNS
+        log_step("INTEREST_REFINEMENT", "Interest refinement agent initialized")
     
     def generate_dialogue_prompt(self, state: PreferenceState, last_user_msg: str,
                                 budget: float, people: int, days: int) -> str:
@@ -19,6 +21,8 @@ class InterestRefinementAgent:
         
         # Extract only essential information
         user_prefs = self._extract_user_preferences_optimized(state, last_user_msg)
+        
+        log_step("INTEREST_REFINEMENT", f"Generating dialogue prompt for {days}-day trip, budget {budget}€", level="debug")
         
         prompt = f"""You are a travel assistant. User wants a {days}-day trip for {people}, budget {budget}EUR.
 
@@ -82,33 +86,81 @@ class InterestRefinementAgent:
     def process_turn(self, state: PreferenceState, last_user_msg: str,
                     budget: float, people: int, days: int) -> Dict:
         """Process a dialogue turn."""
+        log_step("INTEREST_REFINEMENT", f"Processing dialogue turn (turn {state.turns + 1}/{self.max_turns})")
+        log_agent_communication(
+            from_agent="InterestRefinementAgent",
+            to_agent="LLM",
+            message_type="dialogue_turn_request",
+            data={
+                "user_message": last_user_msg[:100],
+                "budget": budget,
+                "people": people,
+                "days": days,
+                "current_turn": state.turns + 1
+            }
+        )
+        
         prompt = self.generate_dialogue_prompt(state, last_user_msg, budget, people, days)
         
         try:
             raw_response = self.llm_client.generate(prompt, temperature=0.7)
-            print(f"🔍 Raw LLM response for city recommendation:\n{raw_response}\n")
+            
+            log_step("INTEREST_REFINEMENT", f"Received LLM response ({len(raw_response)} chars)")
+            log_agent_communication(
+                from_agent="LLM",
+                to_agent="InterestRefinementAgent",
+                message_type="dialogue_turn_response",
+                data={
+                    "response_length": len(raw_response),
+                    "preview": raw_response[:200]
+                }
+            )
+            
             response_data = self.json_parser.parse_response(raw_response)
             
             # Validate and add defaults
             response_data = self._validate_response(response_data, budget, people)
             
+            # Log the response
+            log_agent_output(
+                "InterestRefinementAgent",
+                response_data,
+                context=f"turn_{state.turns + 1}"
+            )
+            
             # If finalizing, ensure city recommendation
             if response_data["action"] == "finalize" and not response_data["chosen_city"]:
+                log_step("INTEREST_REFINEMENT", "No city chosen, getting recommendation")
                 # Get city recommendation based on preferences
                 response_data["chosen_city"] = self._get_city_recommendation(
                     state, last_user_msg, budget, days
                 )
             
+            log_step("INTEREST_REFINEMENT", f"Action: {response_data['action']}, City: {response_data.get('chosen_city', 'None')}")
+            
             return response_data
             
         except Exception as e:
-            print(f"Error in dialogue turn: {e}")
+            error_msg = f"Error in dialogue turn: {e}"
+            log_step("INTEREST_REFINEMENT", error_msg, level="error")
             return self._create_fallback_response(state, budget, people)
     
     def _get_city_recommendation(self, state: PreferenceState, last_user_msg: str,
                                 budget: float, days: int) -> str:
         """Use LLM to recommend a city based on user preferences."""
         user_prefs = self._extract_user_preferences_optimized(state, last_user_msg)
+        
+        log_step("INTEREST_REFINEMENT", "Getting city recommendation from LLM")
+        log_agent_communication(
+            from_agent="InterestRefinementAgent",
+            to_agent="LLM",
+            message_type="city_recommendation_request",
+            data={
+                "preferences": user_prefs,
+                "budget": budget,
+                "days": days
+            }
+        )
         
         prompt = f"""Based on user preferences, recommend ONE specific city:
 
@@ -133,36 +185,56 @@ Example: "Interlaken" or "Salzburg" or "Vancouver"
             # Clean response
             city = city.replace('"', '').replace("'", "").split('\n')[0].split(',')[0].strip()
             
+            log_agent_communication(
+                from_agent="LLM",
+                to_agent="InterestRefinementAgent",
+                message_type="city_recommendation_response",
+                data={
+                    "raw_city": response,
+                    "cleaned_city": city
+                }
+            )
+            
             if 2 < len(city) < 50 and city[0].isalpha():
-                print(f"🌍 LLM Recommended City: {city}")
+                log_step("INTEREST_REFINEMENT", f"LLM Recommended City: {city}")
                 return city
             else:
+                log_step("INTEREST_REFINEMENT", f"Invalid city recommendation: '{city}', using fallback", level="warning")
                 return self._get_fallback_city(user_prefs)
                 
         except Exception as e:
-            print(f"❌ Error getting city from LLM: {e}")
+            log_step("INTEREST_REFINEMENT", f"Error getting city from LLM: {e}", level="error")
             return self._get_fallback_city(user_prefs)
     
     def _get_fallback_city(self, user_prefs: str) -> str:
         """Get fallback city based on preferences."""
+        log_step("INTEREST_REFINEMENT", "Using fallback city selection")
+        
         if "hiking" in user_prefs.lower() or "forest" in user_prefs.lower():
-            return "Interlaken"  # Good for hiking/nature
+            city = "Interlaken"  # Good for hiking/nature
+            log_step("INTEREST_REFINEMENT", f"Fallback: {city} (hiking/nature)")
         elif "beach" in user_prefs.lower() or "coast" in user_prefs.lower():
-            return "Barcelona"
+            city = "Barcelona"
+            log_step("INTEREST_REFINEMENT", f"Fallback: {city} (beach)")
         else:
             # Let the LLM try one more time with a simpler prompt
             try:
                 simple_prompt = "Recommend one city for a relaxed trip. City name only."
                 response = self.llm_client.generate(simple_prompt, temperature=0.5)
-                return response.strip().split('\n')[0]
+                city = response.strip().split('\n')[0]
+                log_step("INTEREST_REFINEMENT", f"Simple prompt fallback: {city}")
             except:
-                return "Paris"  # Last resort fallback
+                city = "Paris"  # Last resort fallback
+                log_step("INTEREST_REFINEMENT", f"Last resort fallback: {city}")
+        
+        return city
     
     def _validate_response(self, data: Dict, budget: float, people: int) -> Dict:
         """Validate and add default values to response."""
         # Ensure action is valid
         if data.get("action") not in ["ask_question", "finalize"]:
             data["action"] = "ask_question"
+            log_step("INTEREST_REFINEMENT", "Invalid action, defaulting to 'ask_question'", level="debug")
         
         # Ensure constraints exist
         if not isinstance(data.get("constraints"), dict):
@@ -181,11 +253,15 @@ Example: "Interlaken" or "Salzburg" or "Vancouver"
         data.setdefault("chosen_city", None)
         data.setdefault("travel_style", None)
         
+        log_step("INTEREST_REFINEMENT", f"Validated response: action={data['action']}, city={data['chosen_city']}", level="debug")
+        
         return data
     
     def _create_fallback_response(self, state: PreferenceState, 
                                  budget: float, people: int) -> Dict:
         """Create fallback response when LLM fails."""
+        log_step("INTEREST_REFINEMENT", "Creating fallback response", level="warning")
+        
         return {
             "action": "ask_question",
             "question": "What type of activities or attractions interest you most?",
@@ -202,9 +278,12 @@ Example: "Interlaken" or "Salzburg" or "Vancouver"
     
     def create_final_profile(self, state: PreferenceState, llm_output: Dict) -> TravelProfile:
         """Create final travel profile from dialogue results."""
+        log_step("INTEREST_REFINEMENT", "Creating final travel profile")
+        
         # If no city chosen, get one from LLM
         chosen_city = llm_output.get("chosen_city")
         if not chosen_city:
+            log_step("INTEREST_REFINEMENT", "No city in output, getting recommendation")
             chosen_city = self._get_city_recommendation(
                 state, 
                 state.slots.get("last_message", ""), 
@@ -212,9 +291,9 @@ Example: "Interlaken" or "Salzburg" or "Vancouver"
                 3  # default days
             )
         
-        return TravelProfile(
+        profile = TravelProfile(
             refined_profile=llm_output["refined_profile"],
-            chosen_city=chosen_city,  # NO MORE "Rome" hardcode!
+            chosen_city=chosen_city,
             constraints=TripConstraints(**llm_output["constraints"]),
             travel_style=llm_output["travel_style"],
             semantic_profile_slots=state.slots,
@@ -224,3 +303,16 @@ Example: "Interlaken" or "Salzburg" or "Vancouver"
                 else None
             )
         )
+        
+        log_step("INTEREST_REFINEMENT", f"Profile created: {chosen_city}")
+        log_agent_output(
+            "InterestRefinementAgent",
+            {
+                "chosen_city": chosen_city,
+                "refined_profile": llm_output["refined_profile"][:100],
+                "constraints": llm_output["constraints"]
+            },
+            context="final_profile"
+        )
+        
+        return profile

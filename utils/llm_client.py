@@ -45,7 +45,6 @@ class LLMClient:
                 # Check if cache is still valid
                 cache_time = cached_data.get('timestamp')
                 if cache_time and datetime.now() - cache_time < timedelta(seconds=Config.CACHE_TTL_SECONDS):
-                    print(f"🔄 Using cached response for prompt (saved {cache_time})")
                     return cached_data.get('response')
             except Exception:
                 pass
