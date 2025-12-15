@@ -15,95 +15,56 @@ class InterestRefinementAgent:
     
     def generate_dialogue_prompt(self, state: PreferenceState, last_user_msg: str,
                                 budget: float, people: int, days: int) -> str:
-        """Generate prompt for dialogue turn."""
+        """Generate OPTIMIZED prompt for dialogue turn."""
         
-        # Extract key user preferences
-        user_prefs = self._extract_user_preferences(state, last_user_msg)
+        # Extract only essential information
+        user_prefs = self._extract_user_preferences_optimized(state, last_user_msg)
         
-        prompt = f"""You are the "Interest-Refinement & City-Matchmaker Agent" in a travel planning system.
+        prompt = f"""You are a travel assistant. User wants a {days}-day trip for {people}, budget {budget}EUR.
 
-We are interviewing a user to plan a {days}-day city trip for {people} people with a total budget of {budget} EUR.
+    Preferences: {user_prefs}
+    Last message: "{last_user_msg}"
 
-CRITICAL INFORMATION ALREADY COLLECTED:
-- Total budget: {budget} EUR (already confirmed)
-- Number of people: {people} (already confirmed) 
-- Trip duration: {days} days (already confirmed)
+    Task: If enough info, recommend ONE city. Else, ask ONE clarifying question.
+    Focus on interests, pace, constraints. Skip budget/people/days questions.
 
-USER PREFERENCES (so far):
-{user_prefs}
+    JSON only: {{
+    "action": "ask_question/finalize",
+    "question": "string or empty",
+    "chosen_city": "string or null",
+    "refined_profile": "short summary"
+    }}"""
 
-Most recent user message:
-\"\"\"{last_user_msg}\"\"\"
-
-Your tasks:
-1. DO NOT ask about budget, number of people, or trip duration - these are already confirmed.
-2. Focus on understanding interests, preferences, pace, food, and constraints.
-3. If we have enough information, recommend ONE city that matches user preferences.
-4. If not, ask ONE clarifying question.
-
-IMPORTANT GUIDELINES:
-- If user mentions hiking, forests, parks, nature - recommend a city with good outdoor activities
-- If user says NO to cultural/historical - avoid recommending cultural cities
-- Consider relaxed vs fast pace preferences
-- The city must match user's actual interests
-
-Return ONLY valid JSON with this structure:
-{{
-  "action": "ask_question" or "finalize",
-  "question": "string (if action == 'ask_question', else empty)",
-  "refined_profile": "short natural language summary",
-  "chosen_city": "string (must be a real city name) or null",
-  "constraints": {{
-    "with_children": true/false/null,
-    "with_disabled": true/false/null,
-    "budget": {budget},
-    "people": {people}
-  }},
-  "travel_style": "slow"/"medium"/"fast"/null
-}}
-
-IMPORTANT: 
-- DO NOT ask about budget, people count, or trip duration
-- Maximum {self.max_turns} questions total - be efficient!
-- Return ONLY the JSON object, no additional text"""
-        
         return prompt
-    
-    def _extract_user_preferences(self, state: PreferenceState, last_user_msg: str) -> str:
-        """Extract and format user preferences."""
+
+    def _extract_user_preferences_optimized(self, state: PreferenceState, last_user_msg: str) -> str:
+        """Extract preferences more efficiently."""
+        # Combine all slots into one string for faster processing
         preferences = []
         
-        # Check for key preferences in slots
-        for key, label in [
-            ("activities", "Activities"),
-            ("pace", "Pace"),
-            ("food", "Food"),
-            ("constraints", "Constraints"),
-            ("interests", "Interests")
-        ]:
-            value = state.slots.get(key, "") or "not specified yet"
-            if value and value != "not specified yet":
-                preferences.append(f"{label}: {value}")
+        for key in ["activities", "pace", "food", "constraints"]:
+            value = state.slots.get(key, "")
+            if value and len(value) < 100:  # Limit length
+                preferences.append(f"{key}: {value[:80]}")  # Truncate long values
         
-        # Also check recent message for key terms
+        # Add key terms from last message
         lower_msg = last_user_msg.lower()
-        if "hiking" in lower_msg or "forest" in lower_msg or "park" in lower_msg:
-            preferences.append("Nature activities: Yes (hiking/forests/parks mentioned)")
-        if "culture" in lower_msg or "museum" in lower_msg or "historical" in lower_msg:
-            if "not" in lower_msg or "no" in lower_msg:
-                preferences.append("Cultural interests: No (user said not interested)")
-            else:
-                preferences.append("Cultural interests: Yes")
-        if "relaxed" in lower_msg or "slow" in lower_msg:
-            preferences.append("Pace preference: Relaxed/slow")
-        if "fast" in lower_msg or "busy" in lower_msg:
-            preferences.append("Pace preference: Fast/busy")
+        key_terms = []
         
-        if not preferences:
-            return "User hasn't specified preferences yet"
+        for term, label in [
+            ("hiking", "nature"), ("forest", "nature"), ("park", "nature"),
+            ("museum", "culture"), ("historical", "culture"),
+            ("relaxed", "slow pace"), ("fast", "busy pace"),
+            ("food", "cuisine"), ("restaurant", "dining")
+        ]:
+            if term in lower_msg:
+                key_terms.append(label)
         
-        return "\n".join(preferences)
-    
+        if key_terms:
+            preferences.append(f"Recent: {', '.join(set(key_terms))}")
+        
+        return " | ".join(preferences) if preferences else "General preferences"
+        
     def _build_profile_summary(self, state: PreferenceState) -> str:
         """Helper to build profile summary."""
         summary = []
@@ -147,7 +108,7 @@ IMPORTANT:
     def _get_city_recommendation(self, state: PreferenceState, last_user_msg: str,
                                 budget: float, days: int) -> str:
         """Use LLM to recommend a city based on user preferences."""
-        user_prefs = self._extract_user_preferences(state, last_user_msg)
+        user_prefs = self._extract_user_preferences_optimized(state, last_user_msg)
         
         prompt = f"""Based on user preferences, recommend ONE specific city:
 

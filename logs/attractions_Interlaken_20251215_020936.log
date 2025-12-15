@@ -1,0 +1,222 @@
+===========================================
+LOCATION SCOUT DEBUG LOG - 20251215_020936
+City: Interlaken
+===========================================
+
+PROMPT SENT TO LLM:
+You are a travel planning assistant.
+The user wants a trip to Interlaken.
+
+USER'S ACTUAL PREFERENCES:
+Activities: hiking
+Pace: not specified yet
+Food: yes
+Constraints: not specified yet
+Budget: Budget is 200.0 EUR for 1 people for 2 days
+
+SPECIFIC USER REQUIREMENTS:
+- MUST INCLUDE: Hiking trails, forests, parks, outdoor nature areas
+- INCLUDE: Local food experiences, restaurants, markets
+
+CONSTRAINTS:
+- With children: False
+- With disabled traveler: False
+- Budget (entire trip, group): 200.0 EUR
+- People: 1
+
+CRITICAL: Match attractions to user's ACTUAL preferences.
+If user wants hiking/forests/parks - suggest outdoor nature attractions.
+If user does NOT want cultural/historical - avoid museums and historical sites.
+
+Propose EXACTLY 10 candidate attractions in Interlaken that match the user's interests and constraints.
+
+For each attraction, output an object with:
+- name
+- short_description
+- approx_price_per_person (number in EUR)
+- tags: an array of strings (choose appropriate tags based on user preferences)
+- reason_for_user: one sentence explaining why this matches the ACTUAL profile.
+
+IMPORTANT: Return ONLY a JSON array of EXACTLY 10 objects. Do NOT include any text before or after the JSON array.
+Example format:
+[
+  {
+    "name": "Forest Hiking Trail",
+    "short_description": "Beautiful trail through ancient forest",
+    "approx_price_per_person": 0,
+    "tags": ["hiking", "forest", "nature", "outdoor", "free"],
+    "reason_for_user": "Perfect for nature lovers who enjoy hiking in forests"
+  },
+  {...}  // 9 more attractions
+]
+
+
+==================================================
+
+FULL LLM RESPONSE:
+[
+  {
+    "name": "Lauterbrunnen Valley",
+    "short_description": "A picturesque valley with stunning mountain views and hiking trails",
+    "approx_price_per_person": 0,
+    "tags": ["hiking", "nature", "outdoor", "free"],
+    "reason_for_user": "A must-visit for hikers who love the outdoors"
+  },
+  {
+    "name": "Schynige Platte",
+    "short_description": "A mountain peak with breathtaking views and hiking trails",
+    "approx_price_per_person": 25,
+    "tags": ["hiking", "nature", "outdoor"],
+    "reason_for_user": "A great spot for hikers who want to take in the stunning views"
+  },
+  {
+    "name": "Jungfrau Park",
+    "short_description": "An amusement park with a nature-themed area and hiking trails",
+    "approx_price_per_person": 30,
+    "tags": ["hiking", "nature", "outdoor"],
+    "reason_for_user": "A fun day out for hikers who want to combine adventure with nature"
+  },
+  {
+    "name": "Grindelwald Forest",
+    "short_description": "A beautiful forest with hiking trails and stunning mountain views",
+    "approx_price_per_person": 0,
+    "tags": ["hiking", "forest", "nature", "outdoor", "free"],
+    "reason_for_user": "Perfect for hikers who love exploring forests"
+  },
+  {
+    "name": "Harder Kulm Panorama Trail",
+    "short_description": "A scenic trail with stunning views of Interlaken and the surrounding mountains",
+    "approx_price_per_person": 10,
+    "tags": ["hiking", "nature", "outdoor"],
+    "reason_for_user": "A great spot for hikers who want to take in the breathtaking views"
+  },
+  {
+    "name": "Wildenmannsgärtli",
+    "short_description": "A charming garden with hiking trails and a variety of plants and flowers",
+    "approx_price_per_person": 0,
+    "tags": ["hiking", "nature", "outdoor", "free"],
+    "reason_for_user": "A lovely spot for hikers who appreciate nature"
+  },
+  {
+    "name": "Interlaken's River Walk",
+    "short_description": "A scenic path along the Aare River with stunning views of the surrounding mountains",
+    "approx_price_per_person": 0,
+    "tags": ["hiking", "nature", "outdoor", "free"],
+    "reason_for_user": "A relaxing day out for hikers who love nature"
+  },
+  {
+    "name": "Schilthorn Mountain",
+    "short_description": "A mountain peak with stunning views and hiking trails",
+    "approx_price_per_person": 30,
+    "tags": ["hiking", "nature", "outdoor"],
+    "reason_for_user": "A great spot for hikers who want to take in the breathtaking views"
+  },
+  {
+    "name": "Axalp Mountain",
+    "short_description": "A mountain peak with stunning views and hiking trails",
+    "approx_price_per_person": 25,
+    "tags": ["hiking", "nature", "outdoor"],
+    "reason_for_user": "A great spot for hikers who want to take in the stunning views"
+  },
+  {
+    "name": "Hohematte Nature Reserve",
+    "short_description": "A nature reserve with hiking trails and stunning views of the surrounding mountains",
+    "approx_price_per_person": 0,
+    "tags": ["hiking", "nature", "outdoor", "free"],
+    "reason_for_user": "Perfect for hikers who love exploring nature"
+  }
+]
+
+==================================================
+
+RESPONSE STATS:
+- Total length: 3055 characters
+- Has opening '[': Yes
+- Has closing ']': Yes
+- Bracket count: 11 openings, 11 closings
+- Brace count: 10 openings, 10 closings
+
+==================================================
+
+PARSED DATA:
+- Type: <class 'list'>
+- Length: 10
+
+==================================================
+
+RAW JSON EXTRACTION ATTEMPT:
+Extracted JSON (chars 0-3054):
+[
+  {
+    "name": "Lauterbrunnen Valley",
+    "short_description": "A picturesque valley with stunning mountain views and hiking trails",
+    "approx_price_per_person": 0,
+    "tags": ["hiking", "nature", "outdoor", "free"],
+    "reason_for_user": "A must-visit for hikers who love the outdoors"
+  },
+  {
+    "name": "Schynige Platte",
+    "short_description": "A mountain peak with breathtaking views and hiking trails",
+    "approx_price_per_person": 25,
+    "tags": ["hiking", "nature", "outdoor"],
+    "reason_for_user": "A great spot for hikers who want to take in the stunning views"
+  },
+  {
+    "name": "Jungfrau Park",
+    "short_description": "An amusement park with a nature-themed area and hiking trails",
+    "approx_price_per_person": 30,
+    "tags": ["hiking", "nature", "outdoor"],
+    "reason_for_user": "A fun day out for hikers who want to combine adventure with nature"
+  },
+  {
+    "name": "Grindelwald Forest",
+    "short_description": "A beautiful forest with hiking trails and stunning mountain views",
+    "approx_price_per_person": 0,
+    "tags": ["hiking", "forest", "nature", "outdoor", "free"],
+    "reason_for_user": "Perfect for hikers who love exploring forests"
+  },
+  {
+    "name": "Harder Kulm Panorama Trail",
+    "short_description": "A scenic trail with stunning views of Interlaken and the surrounding mountains",
+    "approx_price_per_person": 10,
+    "tags": ["hiking", "nature", "outdoor"],
+    "reason_for_user": "A great spot for hikers who want to take in the breathtaking views"
+  },
+  {
+    "name": "Wildenmannsgärtli",
+    "short_description": "A charming garden with hiking trails and a variety of plants and flowers",
+    "approx_price_per_person": 0,
+    "tags": ["hiking", "nature", "outdoor", "free"],
+    "reason_for_user": "A lovely spot for hikers who appreciate nature"
+  },
+  {
+    "name": "Interlaken's River Walk",
+    "short_description": "A scenic path along the Aare River with stunning views of the surrounding mountains",
+    "approx_price_per_person": 0,
+    "tags": ["hiking", "nature", "outdoor", "free"],
+    "reason_for_user": "A relaxing day out for hikers who love nature"
+  },
+  {
+    "name": "Schilthorn Mountain",
+    "short_description": "A mountain peak with stunning views and hiking trails",
+    "approx_price_per_person": 30,
+    "tags": ["hiking", "nature", "outdoor"],
+    "reason_for_user": "A great spot for hikers who want to take in the breathtaking views"
+  },
+  {
+    "name": "Axalp Mountain",
+    "short_description": "A mountain peak with stunning views and hiking trails",
+    "approx_price_per_person": 25,
+    "tags": ["hiking", "nature", "outdoor"],
+    "reason_for_user": "A great spot for hikers who want to take in the stunning views"
+  },
+  {
+    "name": "Hohematte Nature Reserve",
+    "short_description": "A nature reserve with hiking trails and stunning views of the surrounding mountains",
+    "approx_price_per_person": 0,
+    "tags": ["hiking", "nature", "outdoor", "free"],
+    "reason_for_user": "Perfect for hikers who love exploring nature"
+  }
+]
+
+✅ JSON parsed successfully: 10 items

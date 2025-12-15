@@ -1,30 +1,70 @@
 #!/usr/bin/env python3
 """
-Main entry point for Travel Itinerary Planner
+Main entry point for Travel Itinerary Planner - User-Friendly Version
 """
 
 import sys
 import os
+import time
+import json
+from typing import Dict
 
 # Add current directory to Python path
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 try:
-    import json
-    import time
-    from typing import Dict
-    
     from config import Config
     
-    # Try to import logging utils
+    # Import logging utilities
     try:
-        from utils.logging_utils import setup_logging, log_step, Timer
+        from utils.logging_utils import (
+            setup_logging, log_step, Timer, 
+            ConsoleFormatter, LoadingSpinner, 
+            log_to_file_only, clear_screen,
+            log_performance_with_threshold
+        )
         LOGGING_AVAILABLE = True
     except ImportError as e:
-        print(f"Note: Logging utils not available: {e}")
+        print(f"Logging utils import error: {e}")
+        print("Creating simple fallback formatters...")
         LOGGING_AVAILABLE = False
+        
+        # Simple fallback formatters
+        class SimpleConsoleFormatter:
+            @staticmethod
+            def loading(msg): return f"Processing {msg}..."
+            @staticmethod
+            def success(msg): return f"✓ {msg}"
+            @staticmethod
+            def info(msg): return f"ℹ️  {msg}"
+            @staticmethod
+            def warning(msg): return f"⚠️  {msg}"
+            @staticmethod
+            def error(msg): return f"✗ {msg}"
+            @staticmethod
+            def question(msg): return f"? {msg}"
+            @staticmethod
+            def step(msg): return f"→ {msg}"
+            @staticmethod
+            def travel(msg): return f"✈️ {msg}"
+        
+        ConsoleFormatter = SimpleConsoleFormatter
+        
+        class SimpleLoadingSpinner:
+            def __init__(self, message="Loading"):
+                self.message = message
+            def __enter__(self):
+                print(f"⌛ {self.message}...", end="", flush=True)
+                return self
+            def __exit__(self, *args):
+                print(" Done!")
+        
+        LoadingSpinner = SimpleLoadingSpinner
+        
+        def log_to_file_only(*args, **kwargs):
+            pass  # Do nothing in fallback mode
     
-    # Try to import agents
+    # Import agents
     try:
         from agents.semantic_agent import SemanticAgent
         from agents.interest_refinement_agent import InterestRefinementAgent
@@ -33,7 +73,7 @@ try:
         from agents.scheduler_agent import SchedulerAgent
         from agents.evaluation_agent import EvaluationAgent
         from agents.google_places_agent import GooglePlacesAgent
-        from utils.data_structures import PreferenceState
+        from utils.data_structures import PreferenceState, TripConstraints, TravelProfile
         AGENTS_AVAILABLE = True
     except ImportError as e:
         print(f"Error importing agents: {e}")
@@ -49,7 +89,7 @@ except ImportError as e:
 
 
 class TravelPlanner:
-    """Main orchestrator for travel planning pipeline."""
+    """Main orchestrator for travel planning pipeline - User Friendly Version."""
     
     def __init__(self):
         if LOGGING_AVAILABLE:
@@ -57,42 +97,70 @@ class TravelPlanner:
         else:
             self.logger = None
         
-        self.semantic_agent = SemanticAgent()
-        self.interest_agent = InterestRefinementAgent()
-        self.location_agent = LocationScoutAgent()
-        self.budget_agent = BudgetAgent()
-        self.scheduler_agent = SchedulerAgent()
-        self.evaluation_agent = EvaluationAgent()
-        self.places_agent = GooglePlacesAgent()
+        # Initialize agents
+        print(ConsoleFormatter.step("Initializing travel planning system..."))
         
-        self.state = PreferenceState()
+        with LoadingSpinner("Starting agents"):
+            self.semantic_agent = SemanticAgent()
+            self.interest_agent = InterestRefinementAgent()
+            self.location_agent = LocationScoutAgent()
+            self.budget_agent = BudgetAgent()
+            self.scheduler_agent = SchedulerAgent()
+            self.evaluation_agent = EvaluationAgent()
+            self.places_agent = GooglePlacesAgent()
+            
+            self.state = PreferenceState()
+        
+        print(ConsoleFormatter.success("System ready!"))
+        time.sleep(0.5)
     
-    def log(self, step_name: str, message: str):
-        """Log a message."""
-        if self.logger:
-            log_step(step_name, message)
-        else:
-            print(f"[{step_name.upper()}] {message}")
+    def show_header(self):
+        """Display application header."""
+        if hasattr(ConsoleFormatter, 'clear_screen'):
+            ConsoleFormatter.clear_screen()
+        elif LOGGING_AVAILABLE:
+            clear_screen()
+        
+        print("=" * 60)
+        print("           🌍 TRAVEL ITINERARY PLANNER 🌍")
+        print("=" * 60)
+        print()
+    
+    def log_to_file(self, category: str, message: str):
+        """Log message to file only."""
+        log_to_file_only(f"[{category}] {message}", "info")
     
     def collect_basic_info(self) -> Dict:
-        """Collect basic trip information."""
-        print("\n" + "="*50)
-        print("TRAVEL PLANNER - Initial Setup")
-        print("="*50)
+        """Collect basic trip information in a user-friendly way."""
+        self.show_header()
+        print(ConsoleFormatter.travel("Let's plan your dream trip! 🎉"))
+        print()
         
         try:
-            budget = float(input(f"Enter total budget in EUR (default: {Config.DEFAULT_BUDGET}): ") 
-                          or Config.DEFAULT_BUDGET)
-            people = int(input(f"Enter number of people (default: {Config.DEFAULT_PEOPLE}): ") 
-                        or Config.DEFAULT_PEOPLE)
-            days = int(input(f"Enter number of days (default: {Config.DEFAULT_DAYS}): ") 
-                      or Config.DEFAULT_DAYS)
+            print("📅 Trip Details")
+            print("─" * 40)
             
-            print(f"\nPlanning {days}-day trip for {people} people with {budget} EUR budget")
+            budget_input = input(f"   Total budget in EUR (press Enter for {Config.DEFAULT_BUDGET}€): ")
+            budget = float(budget_input) if budget_input.strip() else Config.DEFAULT_BUDGET
+            
+            people_input = input(f"   Number of travelers (press Enter for {Config.DEFAULT_PEOPLE}): ")
+            people = int(people_input) if people_input.strip() else Config.DEFAULT_PEOPLE
+            
+            days_input = input(f"   Trip duration in days (press Enter for {Config.DEFAULT_DAYS}): ")
+            days = int(days_input) if days_input.strip() else Config.DEFAULT_DAYS
+            
+            print()
+            print(ConsoleFormatter.success(f"Planning {days}-day trip for {people} traveler(s)"))
+            print(ConsoleFormatter.success(f"Budget: {budget}€"))
+            
+            # Log to file only
+            self.log_to_file("USER_INPUT", f"Budget: {budget}, People: {people}, Days: {days}")
+            
             return {"budget": budget, "people": people, "days": days}
             
         except ValueError as e:
-            print(f"Invalid input: {e}. Using defaults.")
+            print(ConsoleFormatter.error(f"Invalid input: {e}"))
+            print(ConsoleFormatter.info("Using default values"))
             return {
                 "budget": Config.DEFAULT_BUDGET,
                 "people": Config.DEFAULT_PEOPLE,
@@ -100,84 +168,126 @@ class TravelPlanner:
             }
     
     def run_interest_dialogue(self, budget: float, people: int, days: int):
-        """Run interest refinement dialogue."""
-        self.log("INTEREST REFINEMENT", "Starting dialogue")
+        """Run interest refinement dialogue with better UX."""
+        self.show_header()
+        print(ConsoleFormatter.travel(f"Planning your {days}-day adventure! 🌟"))
+        print()
+        print(f"💰 Budget: {budget}€")
+        print(f"👥 Travelers: {people}")
+        print()
+        print("=" * 60)
+        print()
         
-        print(f"\nPlanning a {days}-day trip for {people} people with {budget} EUR budget")
-        initial_msg = input("Tell me about your trip preferences (interests, activities, etc.): ")
+        # Get initial preferences
+        print(ConsoleFormatter.question("What kind of trip are you looking for?"))
+        print("Examples: 'I love hiking and nature', 'Museums and historical sites',")
+        print("'Relaxing beach vacation', 'City exploration and food'")
+        print()
+        initial_msg = input("Your preferences: ")
         
-        # Initial update with user preferences
-        initial_info = f"Budget is {budget} EUR for {people} people for {days} days. {initial_msg}"
-        self.state = self.semantic_agent.update_state(self.state, initial_info)
+        with LoadingSpinner("Analyzing your preferences"):
+            # Process initial input
+            initial_info = f"Budget is {budget} EUR for {people} people for {days} days. {initial_msg}"
+            self.state = self.semantic_agent.update_state(self.state, initial_info)
+            time.sleep(1)  # Simulate processing
         
         turn_count = 0
-        max_turns = Config.MAX_DIALOGUE_TURNS
+        max_turns = min(getattr(Config, 'MAX_DIALOGUE_TURNS', 5), 3)  # Shorter dialogues
         
         while turn_count < max_turns:
             turn_count += 1
-            self.log("DIALOGUE", f"Turn {turn_count}/{max_turns}")
             
-            # Get agent response
-            response = self.interest_agent.process_turn(
-                self.state, initial_msg, budget, people, days
-            )
+            print()
+            print(ConsoleFormatter.step(f"Refining your preferences ({turn_count}/{max_turns})"))
             
-            if response["action"] == "ask_question":
-                question = response["question"]
+            with LoadingSpinner("Thinking of the perfect destination"):
+                # Get agent response
+                response = self.interest_agent.process_turn(
+                    self.state, initial_msg, budget, people, days
+                )
+            
+            if response and response.get("action") == "ask_question":
+                question = response.get("question", "")
+                if not question:
+                    continue
+                    
                 # Skip budget questions
                 if any(word in question.lower() for word in ['budget', 'price', 'cost']):
-                    print(f"\n🔄 Skipping budget question (already known: {budget} EUR)")
-                    if turn_count >= 3:
-                        print("Multiple budget questions detected, finalizing...")
-                        response["action"] = "finalize"
-                    else:
-                        question = "What specific attractions or activities interest you most?"
+                    print(ConsoleFormatter.info(f"Skipping budget question (already set to {budget}€)"))
+                    continue
                 
-                if response["action"] == "ask_question":
-                    print(f"\nAgent: {question}")
-                    user_response = input("You: ")
+                print()
+                print(ConsoleFormatter.question(question))
+                print("(You can type 'done' if you're ready to finalize)")
+                print()
+                user_response = input("Your answer: ")
+                
+                if user_response.lower() in ['done', 'ready', 'finalize', 'that\'s all', '']:
+                    break
+                
+                with LoadingSpinner("Updating your preferences"):
                     self.state = self.semantic_agent.update_state(self.state, user_response)
                     initial_msg = user_response
-                    continue
             
-            if response["action"] == "finalize":
-                profile = self.interest_agent.create_final_profile(self.state, response)
-                self.log("INTEREST REFINEMENT", "Profile finalized successfully")
-                print(f"\n✅ Selected City: {profile.chosen_city}")
+            elif response and response.get("action") == "finalize":
+                with LoadingSpinner("Creating your travel profile"):
+                    profile = self.interest_agent.create_final_profile(self.state, response)
+                
+                print()
+                print(ConsoleFormatter.success("✓ Destination found!"))
+                print("=" * 40)
+                print(f"   🌍 {profile.chosen_city}")
+                print("=" * 40)
+                
+                # Log profile details to file
+                self.log_to_file("PROFILE", f"City: {profile.chosen_city}")
+                self.log_to_file("PROFILE", f"Profile: {profile.refined_profile}")
+                
                 return profile
         
-        # Max turns reached - USE INTEREST AGENT TO GET CITY FROM LLM
-        self.log("INTEREST REFINEMENT", f"Max turns ({max_turns}) reached")
+        # If we exit the loop without finalizing
+        print()
+        print(ConsoleFormatter.info("Finalizing with your current preferences..."))
         
-        # Get city recommendation from the interest agent based on user preferences
-        user_preferences = self.semantic_agent.build_profile_summary(self.state)
+        with LoadingSpinner("Selecting the perfect destination"):
+            # Get city recommendation
+            try:
+                user_preferences = self.semantic_agent.build_profile_summary(self.state)
+            except:
+                user_preferences = "General travel preferences"
+            
+            # Let the interest agent handle the city recommendation
+            profile = self.interest_agent.create_final_profile(self.state, {
+                "refined_profile": user_preferences,
+                "chosen_city": None,
+                "constraints": {
+                    "with_children": False,
+                    "with_disabled": False,
+                    "budget": budget,
+                    "people": people
+                },
+                "travel_style": "medium"
+            })
         
-        # Let the interest agent handle the city recommendation
-        profile = self.interest_agent.create_final_profile(self.state, {
-            "refined_profile": user_preferences,
-            "chosen_city": None,  # Let the agent decide
-            "constraints": {
-                "with_children": False,
-                "with_disabled": False,
-                "budget": budget,
-                "people": people
-            },
-            "travel_style": "medium"
-        })
+        print()
+        print(ConsoleFormatter.success("✓ Destination selected!"))
+        print("=" * 40)
+        print(f"   🌍 {profile.chosen_city}")
+        print("=" * 40)
         
-        print(f"\n✅ Selected City: {profile.chosen_city}")
         return profile
     
     def run_pipeline(self):
-        """Execute complete planning pipeline."""
-        self.log("MAIN PIPELINE", "Starting travel planning")
+        """Execute complete planning pipeline with improved UX."""
+        self.show_header()
         
-        # Validate configuration
-        try:
-            if not Config.validate_config():
-                print("⚠️ Configuration warnings found. Please review.")
-        except:
-            pass  # Skip config validation if it fails
+        # Welcome message
+        print(ConsoleFormatter.travel("Welcome to the Travel Itinerary Planner! ✈️"))
+        print()
+        print("I'll help you plan your perfect trip step by step.")
+        print("Let's start with some basic information.")
+        print()
+        input("Press Enter to continue...")
         
         # Step 1: Collect basic info
         basic_info = self.collect_basic_info()
@@ -186,89 +296,292 @@ class TravelPlanner:
         days = basic_info["days"]
         
         # Step 2: Interest refinement
-        self.log("INTEREST REFINEMENT", "Starting dialogue")
+        print()
+        input("Press Enter to tell me about your travel preferences...")
         profile = self.run_interest_dialogue(budget, people, days)
         
-        # Step 3: Generate attractions
-        self.log("LOCATION SCOUT", f"Generating attractions for {profile.chosen_city}")
-        attractions = self.location_agent.generate_attractions(
-            profile.chosen_city, profile.refined_profile, profile.constraints.model_dump()
-        )
+        if not profile:
+            print(ConsoleFormatter.error("Failed to create profile. Please try again."))
+            return
         
-        # REMOVED: Fallback attractions call (method doesn't exist anymore)
+        # Step 3: Generate attractions
+        print()
+        print(ConsoleFormatter.step(f"Finding amazing places in {profile.chosen_city}..."))
+        
+        with LoadingSpinner("Discovering attractions"):
+            attractions = self.location_agent.generate_attractions(
+                profile.chosen_city, profile.refined_profile, profile.constraints.model_dump()
+            )
+        
+        if attractions:
+            print(ConsoleFormatter.success(f"Found {len(attractions)} potential attractions"))
+        else:
+            print(ConsoleFormatter.warning("No attractions found. Using fallback..."))
+            # Create fallback attractions
+            attractions = []
+        
         if len(attractions) < 3:
-            print(f"⚠️ Only {len(attractions)} attractions generated. Continuing with available attractions.")
+            print(ConsoleFormatter.warning(f"Only {len(attractions)} attractions found. Continuing..."))
         
         # Step 4: Enrich with Google Places
         if hasattr(self.places_agent, 'is_enabled') and self.places_agent.is_enabled():
-            self.log("GOOGLE PLACES", f"Enriching {len(attractions)} attractions")
-            attractions = self.places_agent.enrich_attractions(attractions, profile.chosen_city)
+            print()
+            print(ConsoleFormatter.step("Getting current information about attractions..."))
+            
+            with LoadingSpinner("Contacting Google Places"):
+                attractions = self.places_agent.enrich_attractions(attractions, profile.chosen_city)
+            
+            print(ConsoleFormatter.success("Attraction information updated"))
         else:
-            self.log("GOOGLE PLACES", "API not enabled, skipping enrichment")
+            self.log_to_file("INFO", "Google Places API not enabled, skipping enrichment")
         
         # Step 5: Budget filtering
-        self.log("BUDGET AGENT", f"Filtering attractions for {people} people, {budget} EUR")
-        affordable = self.budget_agent.filter_by_budget(attractions, budget, days, people)
+        print()
+        print(ConsoleFormatter.step("Checking what fits your budget..."))
+        
+        with LoadingSpinner("Calculating costs"):
+            affordable = self.budget_agent.filter_by_budget(attractions, budget, days, people)
+        
+        print(ConsoleFormatter.success(f"{len(affordable)} attractions fit your budget"))
         
         if len(affordable) < 3:
-            print(f"⚠️ Only {len(affordable)} affordable attractions. Using available attractions.")
+            print(ConsoleFormatter.warning("Limited attractions within budget. Showing all available."))
             affordable = attractions[:min(len(attractions), days * 3)]
         
         # Step 6: Create itinerary
-        self.log("SCHEDULER", f"Creating {days}-day itinerary")
-        itinerary = self.scheduler_agent.create_itinerary(affordable, days)
+        print()
+        print(ConsoleFormatter.step("Creating your daily schedule..."))
+        
+        with LoadingSpinner("Optimizing your itinerary"):
+            itinerary = self.scheduler_agent.create_itinerary(affordable, days)
+        
+        print(ConsoleFormatter.success("Daily itinerary created"))
         
         # Step 7: Evaluate itinerary
-        self.log("EVALUATION", "Evaluating itinerary quality")
-        evaluation = self.evaluation_agent.evaluate_itinerary(profile.model_dump(), itinerary.model_dump())
+        print()
+        print(ConsoleFormatter.step("Evaluating your travel plan..."))
+        
+        with LoadingSpinner("Checking quality and feasibility"):
+            evaluation = self.evaluation_agent.evaluate_itinerary(
+                profile.model_dump(), itinerary.model_dump()
+            )
+        
+        print(ConsoleFormatter.success("Evaluation complete"))
         
         # Display results
         self.display_results(profile, itinerary, evaluation, affordable)
         
-        self.log("MAIN PIPELINE", "Planning completed successfully")
+        print()
+        print(ConsoleFormatter.success("Your travel plan is ready!"))
+        self.log_to_file("COMPLETION", "Planning completed successfully")
     
     def display_results(self, profile, itinerary, evaluation, attractions):
-        """Display final results."""
-        print("\n" + "="*60)
-        print("FINAL TRAVEL PLAN")
-        print("="*60)
+        """Display final results in a user-friendly format."""
+        if hasattr(self, 'show_header'):
+            self.show_header()
+        else:
+            print("\n" * 3)
         
-        print(f"\n📍 Destination: {profile.chosen_city}")
-        print(f"👥 People: {profile.constraints.people}")
-        print(f"💰 Budget: {profile.constraints.budget} EUR")
-        print(f"📅 Days: {len([d for d in itinerary.model_dump().keys() if d.startswith('day')])}")
+        print("=" * 60)
+        print("           ✨ YOUR TRAVEL PLAN IS READY! ✨")
+        print("=" * 60)
+        print()
         
-        # Calculate budget summary
-        total_cost = sum(attr.final_price_estimate or 0 for attr in attractions)
-        print(f"💵 Estimated Cost: {total_cost:.2f} EUR")
-        print(f"💶 Remaining Budget: {profile.constraints.budget - total_cost:.2f} EUR")
+        # Trip summary
+        print(ConsoleFormatter.travel("TRIP SUMMARY"))
+        print("─" * 40)
+        print(f"📍 Destination: {profile.chosen_city}")
+        print(f"👥 Travelers: {profile.constraints.people}")
         
-        print("\n📋 ITINERARY:")
-        print(json.dumps(itinerary.model_dump(), indent=2, default=str))
+        # Count days with content
+        itinerary_dict = itinerary.model_dump() if hasattr(itinerary, 'model_dump') else itinerary
+        days_with_content = 0
+        for day_key in ['day1', 'day2', 'day3']:
+            day_data = itinerary_dict.get(day_key, {})
+            if any(len(day_data.get(slot, [])) > 0 for slot in ['morning', 'afternoon', 'evening']):
+                days_with_content += 1
         
-        print("\n⭐ EVALUATION:")
-        print(f"  Interest Match: {evaluation.interest_match}/5")
-        print(f"  Budget Realism: {evaluation.budget_realism}/5")
-        print(f"  Logistics: {evaluation.logistics}/5")
-        print(f"  Suitability: {evaluation.suitability_for_constraints}/5")
-        print(f"  Overall: {self.evaluation_agent.calculate_overall_score(evaluation):.1f}/5")
-        print(f"  Comment: {evaluation.comment}")
+        print(f"📅 Duration: {days_with_content} days")
+        print(f"💰 Budget: {profile.constraints.budget}€")
         
-        print("\n" + "="*60)
-        print("🎉 Your travel plan is ready! Have a great trip!")
-        print("="*60)
+        # Calculate costs
+        total_cost = sum((attr.final_price_estimate or 0) for attr in attractions)
+        remaining = profile.constraints.budget - total_cost
+        
+        print(f"💵 Estimated cost: {total_cost:.2f}€")
+        print(f"💶 Remaining budget: {remaining:.2f}€")
+        
+        if remaining > profile.constraints.budget * 0.2:
+            print(ConsoleFormatter.success("Great budget management! 🎉"))
+        elif remaining < 0:
+            print(ConsoleFormatter.warning("Note: Slightly over budget"))
+        
+        print()
+        
+        # Display itinerary
+        print(ConsoleFormatter.travel("DAILY ITINERARY"))
+        print("─" * 40)
+        
+        for day_key in ['day1', 'day2', 'day3']:
+            day_data = itinerary_dict.get(day_key, {})
+            if any(len(day_data.get(slot, [])) > 0 for slot in ['morning', 'afternoon', 'evening']):
+                print(f"\n📅 {day_key.upper().replace('DAY', 'DAY ')}")
+                print("  " + "─" * 30)
+                
+                for time_slot in ['morning', 'afternoon', 'evening']:
+                    slot_attractions = day_data.get(time_slot, [])
+                    if slot_attractions:
+                        print(f"  ⏰ {time_slot.capitalize()}:")
+                        for attr in slot_attractions:
+                            # Handle both object and dict
+                            if hasattr(attr, 'get'):
+                                name = attr.get('name', 'Unknown')
+                                cost = attr.get('final_price_estimate', 0) or 0
+                            else:
+                                name = getattr(attr, 'name', 'Unknown')
+                                cost = getattr(attr, 'final_price_estimate', 0) or 0
+                            
+                            if profile.constraints.people > 1:
+                                cost_per_person = cost / profile.constraints.people
+                                print(f"    • {name} ({cost_per_person:.1f}€ per person)")
+                            else:
+                                print(f"    • {name} ({cost:.1f}€)")
+        
+        print()
+        
+        # Evaluation
+        print(ConsoleFormatter.travel("PLAN EVALUATION"))
+        print("─" * 40)
+        
+        overall_score = self.evaluation_agent.calculate_overall_score(evaluation)
+        
+        # Convert score to stars
+        stars = "⭐" * int(overall_score)
+        if overall_score - int(overall_score) >= 0.5:
+            stars += "½"
+        
+        print(f"Overall rating: {stars} ({overall_score:.1f}/5)")
+        print()
+        
+        score_details = [
+            ("Interest match", evaluation.interest_match),
+            ("Budget realism", evaluation.budget_realism),
+            ("Schedule flow", evaluation.logistics),
+            ("Suitability", evaluation.suitability_for_constraints)
+        ]
+        
+        for name, score in score_details:
+            bar = "█" * score + "░" * (5 - score)
+            print(f"  {name:20} {bar} {score}/5")
+        
+        print()
+        print("💬 Feedback:", evaluation.comment)
+        
+        print()
+        print("=" * 60)
+        print(ConsoleFormatter.success("🎉 HAVE AN AMAZING TRIP! 🎉"))
+        print("=" * 60)
+        
+        # Save full details to log file
+        self.log_to_file("FINAL_PLAN", f"Destination: {profile.chosen_city}")
+        self.log_to_file("FINAL_PLAN", f"Total cost: {total_cost:.2f}€")
+        self.log_to_file("FINAL_PLAN", f"Evaluation score: {overall_score:.1f}/5")
+        self.log_to_file("FINAL_PLAN", f"Evaluation comment: {evaluation.comment}")
+        
+        # Save itinerary to JSON file
+        self.save_itinerary_to_file(profile, itinerary, evaluation, total_cost)
+    
+    def save_itinerary_to_file(self, profile, itinerary, evaluation, total_cost):
+        """Save the complete itinerary to a JSON file."""
+        import json
+        from datetime import datetime
+        
+        try:
+            filename = f"itinerary_{profile.chosen_city}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+            
+            # Convert to dicts if they're objects
+            if hasattr(profile, 'model_dump'):
+                profile_dict = profile.model_dump()
+            else:
+                profile_dict = profile
+                
+            if hasattr(itinerary, 'model_dump'):
+                itinerary_dict = itinerary.model_dump()
+            else:
+                itinerary_dict = itinerary
+                
+            if hasattr(evaluation, 'model_dump'):
+                evaluation_dict = evaluation.model_dump()
+            else:
+                evaluation_dict = evaluation
+            
+            data = {
+                "metadata": {
+                    "generated": datetime.now().isoformat(),
+                    "destination": profile.chosen_city,
+                    "travelers": profile.constraints.people if hasattr(profile.constraints, 'people') else 1,
+                    "days": 3,
+                    "budget": {
+                        "total": profile.constraints.budget if hasattr(profile.constraints, 'budget') else 0,
+                        "estimated_cost": total_cost,
+                        "remaining": (profile.constraints.budget if hasattr(profile.constraints, 'budget') else 0) - total_cost
+                    }
+                },
+                "profile": profile_dict,
+                "itinerary": itinerary_dict,
+                "evaluation": {
+                    "scores": evaluation_dict,
+                    "overall": self.evaluation_agent.calculate_overall_score(evaluation)
+                }
+            }
+            
+            with open(filename, 'w', encoding='utf-8') as f:
+                json.dump(data, f, indent=2, ensure_ascii=False, default=str)
+            print()
+            print(ConsoleFormatter.info(f"Itinerary saved to: {filename}"))
+        except Exception as e:
+            self.log_to_file("ERROR", f"Failed to save itinerary: {e}")
 
 def main():
-    """Main function."""
+    """Main function with better error handling."""
     try:
         planner = TravelPlanner()
         planner.run_pipeline()
+        
+        # Ask if user wants to save or plan another trip
+        print()
+        print("=" * 60)
+        print()
+        print("What would you like to do next?")
+        print("1. Plan another trip")
+        print("2. Exit")
+        print()
+        
+        try:
+            choice = input("Enter choice (1 or 2): ").strip()
+            if choice == "1":
+                print()
+                print(ConsoleFormatter.info("Starting new planning session..."))
+                time.sleep(1)
+                main()  # Restart
+        except KeyboardInterrupt:
+            pass
+        
     except KeyboardInterrupt:
-        print("\n\n⚠️ Planning cancelled by user.")
+        print("\n\n" + ConsoleFormatter.info("Planning cancelled by user."))
     except Exception as e:
-        print(f"\n❌ Fatal error: {e}")
-        import traceback
-        traceback.print_exc()
+        print("\n" + ConsoleFormatter.error(f"An error occurred: {e}"))
+        
+        # Try to log the error
+        try:
+            with open("error.log", "a") as f:
+                from datetime import datetime
+                f.write(f"\n{datetime.now().isoformat()}\n")
+                import traceback
+                traceback.print_exc(file=f)
+            print(ConsoleFormatter.info("Error details saved to error.log"))
+        except:
+            pass
 
 if __name__ == "__main__":
     main()

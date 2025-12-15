@@ -17,11 +17,25 @@ class Config:
     # Default trip parameters
     DEFAULT_BUDGET = float(os.getenv("DEFAULT_BUDGET", 600.0))
     DEFAULT_DAYS = int(os.getenv("DEFAULT_DAYS", 3))
-    DEFAULT_PEOPLE = int(os.getenv("DEFAULT_PEOPLE", 2))
+    DEFAULT_PEOPLE = int(os.getenv("DEFAULT_PEOPLE", 1))
     
     # Semantic Model
     EMBEDDING_MODEL = "all-MiniLM-L6-v2"
+    # OPTIMIZATION SETTINGS
+    LLM_TEMPERATURE = 0.5  # Lower temperature = faster, more deterministic responses
+    LLM_MAX_TOKENS = 150   # Limit response length
+    ENABLE_STREAMING = True  # If supported by your Ollama setup
     
+    # Cache settings
+    ENABLE_CACHING = True
+    CACHE_TTL_SECONDS = 3600  # 1 hour cache
+    
+    # Parallel processing
+    ENABLE_PARALLEL_PROCESSING = False  # Set based on your CPU cores
+    
+    # Performance thresholds
+    MAX_RESPONSE_TIME = 40  # Seconds before timeout
+    MIN_SIMILARITY_FOR_CACHE = 0.85  # Cache similar queries
     # Thresholds
     SIM_UPDATE_THRESHOLD = 0.75
     MAX_DIALOGUE_TURNS = 3
