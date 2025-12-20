@@ -39,7 +39,12 @@ class Config:
     # Thresholds
     SIM_UPDATE_THRESHOLD = 0.75
     MAX_DIALOGUE_TURNS = 3
-    
+    # Location Scout Agent settings
+    ATTRACTION_CACHE_TTL = 86400  # 24 hours in seconds
+    LLM_TIMEOUT = 30  # seconds
+    MAX_ATTRACTION_COUNT = 10
+    ENABLE_ATTRACTION_CACHE = True
+
     # Performance Settings
     REQUEST_TIMEOUT = 600
     GOOGLE_REQUEST_DELAY = 0.1

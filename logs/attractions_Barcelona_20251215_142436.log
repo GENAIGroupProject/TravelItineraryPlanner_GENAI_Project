@@ -1,0 +1,147 @@
+===========================================
+LOCATION SCOUT DEBUG LOG - 20251215_142436
+City: Barcelona
+===========================================
+
+PROMPT SENT TO LLM:
+You are a travel planning assistant.
+The user wants a trip to Barcelona.
+
+USER'S ACTUAL PREFERENCES:
+Activities: beach vacation
+Pace: not specified yet
+Food: yes
+Constraints: not specified yet
+Budget: Budget is 300.0 EUR for 1 people for 2 days
+
+SPECIFIC USER REQUIREMENTS:
+- INCLUDE: Local food experiences, restaurants, markets
+
+CONSTRAINTS:
+- With children: False
+- With disabled traveler: False
+- Budget (entire trip, group): 300.0 EUR
+- People: 1
+
+CRITICAL: Match attractions to user's ACTUAL preferences.
+If user wants hiking/forests/parks - suggest outdoor nature attractions.
+If user does NOT want cultural/historical - avoid museums and historical sites.
+
+Propose EXACTLY 10 candidate attractions in Barcelona that match the user's interests and constraints.
+
+For each attraction, output an object with:
+- name
+- short_description
+- approx_price_per_person (number in EUR)
+- tags: an array of strings (choose appropriate tags based on user preferences)
+- reason_for_user: one sentence explaining why this matches the ACTUAL profile.
+
+IMPORTANT: Return ONLY a JSON array of EXACTLY 10 objects. Do NOT include any text before or after the JSON array.
+Example format:
+[
+  {
+    "name": "Forest Hiking Trail",
+    "short_description": "Beautiful trail through ancient forest",
+    "approx_price_per_person": 0,
+    "tags": ["hiking", "forest", "nature", "outdoor", "free"],
+    "reason_for_user": "Perfect for nature lovers who enjoy hiking in forests"
+  },
+  {...}  // 9 more attractions
+]
+
+
+==================================================
+
+FULL LLM RESPONSE:
+[
+  {
+    "name": "Barceloneta Beach",
+    "short_description": "One of the most popular beaches in Barcelona, known for its white sand and calm waters",
+    "approx_price_per_person": 0,
+    "tags": ["beach", "coastal", "water"],
+    "reason_for_user": "A perfect spot to relax and enjoy a beach vacation"
+  },
+  {
+    "name": "La Boqueria Market",
+    "short_description": "A famous market in Barcelona, offering a wide variety of local food and drinks",
+    "approx_price_per_person": 10,
+    "tags": ["market", "food", "local"],
+    "reason_for_user": "Experience the city's vibrant food culture with this iconic market"
+  },
+  {
+    "name": "Can Majó Restaurant",
+    "short_description": "A cozy seafood restaurant in Barceloneta, serving fresh and delicious dishes",
+    "approx_price_per_person": 20,
+    "tags": ["restaurant", "seafood", "local"],
+    "reason_for_user": "Indulge in local seafood specialties at this charming restaurant"
+  },
+  {
+    "name": "Barceloneta Night Market",
+    "short_description": "A lively night market offering street food, drinks, and shopping",
+    "approx_price_per_person": 10,
+    "tags": ["night", "market", "food"],
+    "reason_for_user": "Enjoy the city's nightlife with this bustling night market"
+  },
+  {
+    "name": "Nova Icària Beach",
+    "short_description": "A quieter beach in Barcelona, perfect for those looking to relax and soak up the sun",
+    "approx_price_per_person": 0,
+    "tags": ["beach", "coastal"],
+    "reason_for_user": "Escape to a peaceful beach experience without the crowds"
+  },
+  {
+    "name": "Tapas Bar La Plata",
+    "short_description": "A popular tapas bar in Barcelona, offering a wide variety of local small plates and drinks",
+    "approx_price_per_person": 15,
+    "tags": ["bar", "tapas", "local"],
+    "reason_for_user": "Experience the authentic Spanish tapas culture at this lively bar"
+  },
+  {
+    "name": "Santa Monica Market",
+    "short_description": "A bustling market in Barcelona, offering fresh produce and local products",
+    "approx_price_per_person": 10,
+    "tags": ["market", "local"],
+    "reason_for_user": "Discover the flavors of Barcelona at this vibrant market"
+  },
+  {
+    "name": "Passeig Marítim de Barceloneta",
+    "short_description": "A scenic promenade along the beach, perfect for a leisurely stroll or sunset views",
+    "approx_price_per_person": 0,
+    "tags": ["coastal", "scenic"],
+    "reason_for_user": "Enjoy a relaxing walk along the beach with stunning views"
+  },
+  {
+    "name": "Cal Pep Restaurant",
+    "short_description": "A classic Catalan restaurant in Barcelona, serving traditional dishes and local specialties",
+    "approx_price_per_person": 25,
+    "tags": ["restaurant", "local"],
+    "reason_for_user": "Indulge in authentic Catalan cuisine at this iconic restaurant"
+  },
+  {
+    "name": "Barceloneta Fish Market",
+    "short_description": "A bustling market offering fresh seafood and local products",
+    "approx_price_per_person": 10,
+    "tags": ["market", "seafood"],
+    "reason_for_user": "Experience the city's vibrant fish market culture with this lively spot"
+  }
+]
+
+==================================================
+
+RESPONSE STATS:
+- Total length: 3126 characters
+- Parsed attractions: 10
+
+==================================================
+
+PARSED DATA:
+
+1. Barceloneta Beach
+
+2. La Boqueria Market
+
+3. Can Majó Restaurant
+
+4. Barceloneta Night Market
+
+5. Nova Icària Beach

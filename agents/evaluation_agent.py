@@ -157,10 +157,10 @@ Important:
                     validated_scores[key] = max(1, min(5, score))  # Clamp to 1-5
                     log_step("EVALUATION", f"{key}: {validated_scores[key]}/5", level="debug")
                 except (ValueError, TypeError):
-                    validated_scores[key] = 3  # Default to average
+                    validated_scores[key] = 3  
                     log_step("EVALUATION", f"{key}: Invalid score, using default 3", level="warning")
             else:
-                validated_scores[key] = 3  # Default to average
+                validated_scores[key] = 3 
                 log_step("EVALUATION", f"{key}: Missing, using default 3", level="warning")
         
         # Ensure comment exists

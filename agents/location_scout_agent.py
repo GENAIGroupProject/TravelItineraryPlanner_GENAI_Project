@@ -1,8 +1,12 @@
 import json
 import os
 import re
+import time
 from datetime import datetime
 from typing import List, Dict, Optional
+import hashlib
+import pickle
+
 from utils.llm_client import LLMClient
 from utils.json_parser import JSONParser
 from utils.data_structures import Attraction
@@ -10,361 +14,336 @@ from config import Config
 from utils.logging_utils import log_agent_communication, log_step
 
 class LocationScoutAgent:
-    """Agent for generating attractions in a chosen city."""
+    """Optimized agent for generating attractions in a chosen city."""
     
     def __init__(self, llm_client: Optional[LLMClient] = None):
         self.llm_client = llm_client or LLMClient()
         self.json_parser = JSONParser()
-        self.log_dir = "logs"
-        self._ensure_log_dir()
+        self.cache_dir = "cache/attractions"
+        self._ensure_cache_dir()
+        self.timeout = 30  # seconds
+        self.max_retries = 3
+        self.enable_cache = True
     
-    def _ensure_log_dir(self):
-        """Ensure log directory exists."""
-        if not os.path.exists(self.log_dir):
-            os.makedirs(self.log_dir)
+    def _ensure_cache_dir(self):
+        """Ensure cache directory exists."""
+        if not os.path.exists(self.cache_dir):
+            os.makedirs(self.cache_dir, exist_ok=True)
     
-    def _log_to_file(self, filename: str, content: str, mode: str = 'w'):
-        """Log content to a file for detailed debugging."""
-        filepath = os.path.join(self.log_dir, filename)
-        with open(filepath, mode, encoding='utf-8') as f:
-            f.write(content)
-        print(f"📝 Detailed log saved to {filepath}")
+    def _get_cache_key(self, city: str, profile: str, constraints: Dict) -> str:
+        """Generate cache key from inputs."""
+        key_data = {
+            "city": city.lower().strip(),
+            "profile": profile[:200],
+            "constraints": {
+                "with_children": constraints.get("with_children", False),
+                "with_disabled": constraints.get("with_disabled", False),
+                "budget": constraints.get("budget", 0),
+                "people": constraints.get("people", 1)
+            }
+        }
+        key_str = json.dumps(key_data, sort_keys=True)
+        return hashlib.md5(key_str.encode()).hexdigest()
     
-    def _log_llm_response(self, city: str, prompt: str, response: str, parsed_data: List):
-        """Log complete LLM interaction for debugging to separate file."""
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        filename = f"attractions_{city}_{timestamp}.log"
+    def _load_from_cache(self, cache_key: str) -> Optional[List[Attraction]]:
+        """Load attractions from cache if available."""
+        if not self.enable_cache:
+            return None
         
-        log_content = f"""===========================================
-LOCATION SCOUT DEBUG LOG - {timestamp}
-City: {city}
-===========================================
-
-PROMPT SENT TO LLM:
-{prompt}
-
-{'='*50}
-
-FULL LLM RESPONSE:
-{response}
-
-{'='*50}
-
-RESPONSE STATS:
-- Total length: {len(response)} characters
-- Parsed attractions: {len(parsed_data) if isinstance(parsed_data, list) else 'N/A'}
-
-{'='*50}
-
-PARSED DATA:
-"""
-        if isinstance(parsed_data, list) and parsed_data:
-            for i, attraction in enumerate(parsed_data[:5]):  # Log first 5
-                log_content += f"\n{i+1}. {attraction.get('name', 'Unknown')}\n"
-        
-        self._log_to_file(filename, log_content)
-    
-    def _extract_json_array(self, text: str) -> str:
-        """Extract JSON array from text response."""
-        # Look for the main JSON array (most complete one)
-        matches = re.findall(r'(\[.*\])', text, re.DOTALL)
-        
-        if matches:
-            # Return the longest match (likely the main array)
-            return max(matches, key=len)
-        
-        # If no complete array found, try to find start of array
-        start_idx = text.find('[')
-        if start_idx != -1:
-            # Try to find a matching closing bracket
-            bracket_count = 0
-            for i in range(start_idx, len(text)):
-                if text[i] == '[':
-                    bracket_count += 1
-                elif text[i] == ']':
-                    bracket_count -= 1
-                    if bracket_count == 0:
-                        return text[start_idx:i+1]
-        
-        return ""
-    
-    def _parse_json_safely(self, json_str: str):
-        """Try multiple methods to parse JSON safely."""
-        # Method 1: Direct parse
-        try:
-            data = json.loads(json_str)
-            if isinstance(data, list):
-                return data
-        except json.JSONDecodeError as e:
-            print(f"  JSON parse error (method 1): {e}")
-        
-        # Method 2: Try to fix common issues
-        fixed_json = self._fix_json_issues(json_str)
-        try:
-            data = json.loads(fixed_json)
-            if isinstance(data, list):
-                return data
-        except json.JSONDecodeError as e:
-            print(f"  JSON parse error (method 2): {e}")
-        
-        # Method 3: Extract individual objects
-        try:
-            objects = self._extract_json_objects(json_str)
-            return objects
-        except Exception as e:
-            print(f"  Object extraction error: {e}")
-        
-        return []
-    
-    def _fix_json_issues(self, json_str: str) -> str:
-        """Fix common JSON formatting issues."""
-        # Remove trailing commas before closing braces/brackets
-        json_str = re.sub(r',\s*([}\]])', r'\1', json_str)
-        
-        # Fix missing quotes on keys (simple cases)
-        json_str = re.sub(r'(\{|\,\s*)(\w+)(\s*:)', r'\1"\2"\3', json_str)
-        
-        # Ensure array is properly closed
-        if json_str.count('[') > json_str.count(']'):
-            json_str += ']' * (json_str.count('[') - json_str.count(']'))
-        
-        # Ensure objects are properly closed
-        open_braces = json_str.count('{')
-        close_braces = json_str.count('}')
-        if open_braces > close_braces:
-            json_str += '}' * (open_braces - close_braces)
-        
-        return json_str
-    
-    def _extract_json_objects(self, text: str) -> List[Dict]:
-        """Extract individual JSON objects from text."""
-        objects = []
-        # Find all potential JSON objects
-        pattern = r'\{(?:[^{}]|(?R))*\}'
-        matches = re.findall(pattern, text, re.DOTALL)
-        
-        for match in matches:
+        cache_file = os.path.join(self.cache_dir, f"{cache_key}.pkl")
+        if os.path.exists(cache_file):
             try:
-                obj = json.loads(match)
-                if isinstance(obj, dict) and 'name' in obj:
-                    objects.append(obj)
-            except json.JSONDecodeError:
-                continue
+                # Check if cache is still valid (24 hours)
+                if time.time() - os.path.getmtime(cache_file) < 86400:
+                    with open(cache_file, 'rb') as f:
+                        cached_data = pickle.load(f)
+                    log_step("LOCATION_SCOUT", f"Loaded {len(cached_data)} attractions from cache")
+                    return cached_data
+            except Exception as e:
+                log_step("LOCATION_SCOUT", f"Cache load error: {e}", level="debug")
+        return None
+    
+    def _save_to_cache(self, cache_key: str, attractions: List[Attraction]):
+        """Save attractions to cache."""
+        if not self.enable_cache:
+            return
         
-        return objects
-
-    def generate_attractions(self, city: str, refined_profile: str, 
-                           constraints: Dict) -> List[Attraction]:
-        """Generate attractions for the chosen city."""
-        log_step("LOCATION_SCOUT", f"Generating attractions for {city}")
-        
+        try:
+            cache_file = os.path.join(self.cache_dir, f"{cache_key}.pkl")
+            with open(cache_file, 'wb') as f:
+                pickle.dump(attractions, f)
+            log_step("LOCATION_SCOUT", f"Cached {len(attractions)} attractions", level="debug")
+        except Exception as e:
+            log_step("LOCATION_SCOUT", f"Cache save error: {e}", level="debug")
+    
+    def _create_optimized_prompt(self, city: str, user_wants: str, 
+                                constraints: Dict) -> str:
+        """Create an optimized prompt that's faster to process."""
         with_children = constraints.get("with_children", False)
         with_disabled = constraints.get("with_disabled", False)
         budget = constraints.get("budget", Config.DEFAULT_BUDGET)
         people = constraints.get("people", Config.DEFAULT_PEOPLE)
         
-        # Log agent communication to unified log
-        log_agent_communication(
-            from_agent="LocationScoutAgent",
-            to_agent="LLM",
-            message_type="attraction_generation_request",
-            data={
-                "city": city,
-                "refined_profile": refined_profile[:200],  # Truncate for logging
-                "constraints": {
-                    "with_children": with_children,
-                    "with_disabled": with_disabled,
-                    "budget": budget,
-                    "people": people
-                }
-            },
-            city=city
-        )
-        
-        # Analyze user preferences from refined_profile
-        user_wants = self._analyze_user_preferences(refined_profile)
-        
-        prompt = f"""You are a travel planning assistant.
-The user wants a trip to {city}.
+        # Simple, clear prompt
+        prompt = f"""Generate exactly 10 tourist attractions in {city}.
 
-USER'S ACTUAL PREFERENCES:
-{refined_profile}
+User preferences: {user_wants}
 
-SPECIFIC USER REQUIREMENTS:
-{user_wants}
+Important constraints:
+- Traveling with children: {with_children}
+- Accessibility needs: {with_disabled}
+- Total budget: {budget}€ for {people} people
 
-CONSTRAINTS:
-- With children: {with_children}
-- With disabled traveler: {with_disabled}
-- Budget (entire trip, group): {budget} EUR
-- People: {people}
+For each attraction, return a JSON object with these exact fields:
+1. "name": Specific attraction name
+2. "short_description": One sentence description
+3. "approx_price_per_person": Number (0-50 EUR)
+4. "tags": Array of 2-3 tags like ["hiking", "nature", "outdoor"]
+5. "reason_for_user": Why this matches their preferences
 
-CRITICAL: Match attractions to user's ACTUAL preferences.
-If user wants hiking/forests/parks - suggest outdoor nature attractions.
-If user does NOT want cultural/historical - avoid museums and historical sites.
+Return ONLY a valid JSON array with 10 objects. Do not include any other text.
 
-Propose EXACTLY 10 candidate attractions in {city} that match the user's interests and constraints.
-
-For each attraction, output an object with:
-- name
-- short_description
-- approx_price_per_person (number in EUR)
-- tags: an array of strings (choose appropriate tags based on user preferences)
-- reason_for_user: one sentence explaining why this matches the ACTUAL profile.
-
-IMPORTANT: Return ONLY a JSON array of EXACTLY 10 objects. Do NOT include any text before or after the JSON array.
 Example format:
 [
   {{
-    "name": "Forest Hiking Trail",
-    "short_description": "Beautiful trail through ancient forest",
+    "name": "Lake Walk",
+    "short_description": "Beautiful walk around the lake with mountain views",
     "approx_price_per_person": 0,
-    "tags": ["hiking", "forest", "nature", "outdoor", "free"],
-    "reason_for_user": "Perfect for nature lovers who enjoy hiking in forests"
-  }},
-  {{...}}  // 9 more attractions
-]
-"""
-
-        try:
-            raw_response = self.llm_client.generate(prompt, temperature=0.8)
-            
-            # Print full response length
-            print(f"\n🔍 LLM Response Stats:")
-            print(f"  Total length: {len(raw_response)} characters")
-            
-            # Log to unified log
-            log_step("LLM", f"Received response of {len(raw_response)} chars for {city}")
-            
-            # Try to extract JSON
-            json_str = self._extract_json_array(raw_response)
-            
-            if json_str:
-                print(f"✅ Extracted JSON string ({len(json_str)} chars)")
-                
-                # Try to parse with multiple methods
-                response_data = self._parse_json_safely(json_str)
-            else:
-                print("❌ No JSON array found in response")
-                response_data = []
-            
-            parsed_count = len(response_data) if isinstance(response_data, list) else 0
-            print(f"✅ Parsed {parsed_count} attractions from LLM")
-            
-            # Log LLM response for debugging (separate file)
-            self._log_llm_response(city, prompt, raw_response, response_data)
-            
-            # Log agent communication - response received (unified log)
-            log_agent_communication(
-                from_agent="LLM",
-                to_agent="LocationScoutAgent",
-                message_type="attraction_generation_response",
-                data={
-                    "raw_response_length": len(raw_response),
-                    "parsed_count": parsed_count,
-                    "sample_attractions": response_data[:2] if response_data else []
-                },
-                city=city
-            )
-            
-            # Validate and create Attraction objects
-            attractions = self._validate_attractions(response_data, city)
-            
-            log_step("LOCATION_SCOUT", f"Generated {len(attractions)} attractions for {city}")
-            
-            # Log final attractions to unified log
-            log_agent_communication(
-                from_agent="LocationScoutAgent",
-                to_agent="BudgetAgent",
-                message_type="attractions_output",
-                data={
-                    "city": city,
-                    "attraction_count": len(attractions),
-                    "attraction_names": [attr.name[:30] for attr in attractions[:5]]
-                },
-                city=city
-            )
-            
-            return attractions[:10]  # Ensure max 10 attractions
-            
-        except Exception as e:
-            error_msg = f"Error generating attractions: {e}"
-            print(f"❌ {error_msg}")
-            import traceback
-            traceback.print_exc()
-            
-            # Log error to unified log
-            log_step("LOCATION_SCOUT", error_msg, level="error")
-            
-            # Return empty list instead of fallback
+    "tags": ["hiking", "lake", "nature"],
+    "reason_for_user": "Perfect for nature lovers who enjoy scenic walks"
+  }}
+]"""
+        
+        return prompt
+    
+    def _parse_and_clean_json(self, text: str) -> List[Dict]:
+        """Parse JSON from LLM response with robust error handling."""
+        print(f"📄 Raw response length: {len(text)} chars")
+        print(f"📄 Response preview: {text[:200]}...")
+        
+        # First, try to find JSON array
+        json_match = re.search(r'\[.*\]', text, re.DOTALL)
+        
+        if not json_match:
+            print("❌ No JSON array pattern found in response")
             return []
+        
+        json_str = json_match.group(0)
+        print(f"📄 Found JSON string, length: {len(json_str)} chars")
+        
+        try:
+            # Try direct parse first
+            data = json.loads(json_str)
+            if isinstance(data, list):
+                print(f"✅ Direct JSON parse successful, found {len(data)} items")
+                return data
+        except json.JSONDecodeError as e:
+            print(f"⚠️ JSON parse error: {e}")
+            print(f"📄 JSON preview: {json_str[:200]}...")
+            
+            # Try to fix common JSON issues
+            fixed_json = self._fix_json_common_issues(json_str)
+            try:
+                data = json.loads(fixed_json)
+                if isinstance(data, list):
+                    print(f"✅ Fixed JSON parse successful, found {len(data)} items")
+                    return data
+            except json.JSONDecodeError as e2:
+                print(f"❌ Fixed JSON also failed: {e2}")
+                print(f"📄 Fixed JSON preview: {fixed_json[:200]}...")
+        
+        return []
+    
+    def _fix_json_common_issues(self, json_str: str) -> str:
+        """Fix common JSON formatting issues."""
+        # Remove trailing commas before ] or }
+        json_str = re.sub(r',\s*([}\]])', r'\1', json_str)
+        
+        # Fix missing quotes on keys
+        json_str = re.sub(r'(\{|\,\s*)(\w+)(\s*:)', r'\1"\2"\3', json_str)
+        
+        # Fix single quotes to double quotes
+        json_str = json_str.replace("'", '"')
+        
+        # Ensure proper string escaping
+        json_str = re.sub(r'(?<!\\)"([^"]*?)(?<!\\)"', r'"\1"', json_str)
+        
+        return json_str
+    
+    def _create_attraction_objects(self, raw_data: List[Dict], city: str) -> List[Attraction]:
+        """Create Attraction objects from raw data."""
+        attractions = []
+        
+        for i, item in enumerate(raw_data):
+            try:
+                # Ensure required fields
+                if not isinstance(item, dict) or 'name' not in item:
+                    print(f"  ⚠️ Item {i}: Not a dict or missing 'name' field")
+                    continue
+                
+                # Clean and validate fields
+                name = str(item.get('name', f'Attraction {i+1}')).strip()
+                if not name or len(name) < 2:
+                    print(f"  ⚠️ Item {i}: Invalid name '{name}'")
+                    continue
+                
+                description = str(item.get('short_description', f'Popular attraction in {city}')).strip()
+                
+                # Validate price
+                price = 15.0  # default
+                price_raw = item.get('approx_price_per_person')
+                if price_raw is not None:
+                    try:
+                        if isinstance(price_raw, (int, float)):
+                            price = float(price_raw)
+                        elif isinstance(price_raw, str):
+                            # Extract numbers from string
+                            numbers = re.findall(r'\d+\.?\d*', price_raw)
+                            if numbers:
+                                price = float(numbers[0])
+                    except (ValueError, TypeError):
+                        pass
+                
+                if price < 0 or price > 1000:
+                    price = 15.0
+                
+                # Validate tags
+                tags = item.get('tags', [])
+                if not isinstance(tags, list):
+                    tags = ['sightseeing']
+                tags = [str(tag).lower().strip() for tag in tags if tag and str(tag).strip()]
+                if not tags:
+                    tags = ['sightseeing']
+                
+                reason = str(item.get('reason_for_user', f'Recommended attraction in {city}')).strip()
+                
+                # Create attraction
+                attraction = Attraction(
+                    name=name[:100],
+                    short_description=description[:200],
+                    approx_price_per_person=price,
+                    tags=tags[:5],
+                    reason_for_user=reason[:200]
+                )
+                
+                attractions.append(attraction)
+                print(f"  ✅ Created: {name[:30]}... (price: {price}€, tags: {tags})")
+                
+            except Exception as e:
+                print(f"  ❌ Error creating attraction {i}: {e}")
+                continue
+        
+        return attractions
 
+    def generate_attractions(self, city: str, refined_profile: str, 
+                           constraints: Dict) -> List[Attraction]:
+        """Generate attractions for the chosen city."""
+        print(f"\n🔍 Starting attraction generation for {city}")
+        start_time = time.time()
+        
+        # Check cache first
+        cache_key = self._get_cache_key(city, refined_profile, constraints)
+        cached_result = self._load_from_cache(cache_key)
+        if cached_result:
+            print(f"✅ Using cached attractions for {city}")
+            return cached_result
+        
+        print(f"🔄 Generating new attractions for {city}")
+        
+        # Analyze preferences
+        user_wants = self._analyze_user_preferences(refined_profile)
+        print(f"📋 User preferences: {user_wants}")
+        
+        # Create prompt
+        prompt = self._create_optimized_prompt(city, user_wants, constraints)
+        
+        # Call LLM with retries - WITHOUT max_tokens parameter
+        raw_response = None
+        for attempt in range(self.max_retries):
+            try:
+                print(f"📤 Attempt {attempt + 1}/{self.max_retries} calling LLM...")
+                
+                # Call LLM WITHOUT max_tokens parameter
+                raw_response = self.llm_client.generate(
+                    prompt, 
+                    temperature=0.7
+                    # Remove max_tokens parameter
+                )
+                
+                if raw_response and len(raw_response) > 100:
+                    print(f"📥 Received LLM response ({len(raw_response)} chars)")
+                    break
+                else:
+                    print(f"⚠️ Short response received: {len(raw_response) if raw_response else 0} chars")
+                    
+            except Exception as e:
+                print(f"❌ LLM attempt {attempt + 1} failed: {e}")
+                if attempt == self.max_retries - 1:
+                    print("❌ All LLM attempts failed")
+                    return []
+                time.sleep(2)  # Wait before retry
+        
+        if not raw_response or len(raw_response) < 100:
+            print("❌ No valid response from LLM")
+            return []
+        
+        # Parse response
+        print("🔍 Parsing LLM response...")
+        raw_data = self._parse_and_clean_json(raw_response)
+        
+        if not raw_data:
+            print("❌ Could not parse any attractions from response")
+            return []
+        
+        print(f"✅ Parsed {len(raw_data)} raw attraction items")
+        
+        # Create Attraction objects
+        attractions = self._create_attraction_objects(raw_data, city)
+        
+        if not attractions:
+            print("❌ Could not create any valid attraction objects")
+            return []
+        
+        print(f"✅ Created {len(attractions)} valid attractions")
+        
+        # Cache the result
+        self._save_to_cache(cache_key, attractions)
+        
+        elapsed = time.time() - start_time
+        print(f"⏱️  Generated {len(attractions)} attractions in {elapsed:.1f}s")
+        
+        return attractions[:10]  # Ensure max 10
+    
     def _analyze_user_preferences(self, refined_profile: str) -> str:
         """Analyze user preferences to guide attraction selection."""
         profile_lower = refined_profile.lower()
         
         requirements = []
         
-        if "hiking" in profile_lower or "forest" in profile_lower or "park" in profile_lower:
-            requirements.append("- MUST INCLUDE: Hiking trails, forests, parks, outdoor nature areas")
+        # Check for specific preferences
+        if any(word in profile_lower for word in ["hiking", "forest", "park", "nature", "outdoor"]):
+            requirements.append("Include hiking trails, forests, parks, outdoor nature areas")
         
-        if "not cultural" in profile_lower or "no cultural" in profile_lower or "not historical" in profile_lower:
-            requirements.append("- MUST AVOID: Museums, historical sites, cultural attractions")
-        elif "cultural" in profile_lower or "museum" in profile_lower or "historical" in profile_lower:
-            requirements.append("- SHOULD INCLUDE: Cultural and historical attractions")
+        if any(word in profile_lower for word in ["not cultural", "no cultural", "not historical", "no museums"]):
+            requirements.append("Avoid museums, historical sites, cultural attractions")
+        elif any(word in profile_lower for word in ["cultural", "museum", "historical", "art", "history"]):
+            requirements.append("Include cultural and historical attractions")
         
-        if "relaxed" in profile_lower or "slow" in profile_lower:
-            requirements.append("- PREFER: Relaxed pace activities, not crowded/touristy")
-        elif "fast" in profile_lower or "busy" in profile_lower:
-            requirements.append("- PREFER: Active, fast-paced experiences")
+        if any(word in profile_lower for word in ["beach", "coast", "sea", "lake", "water"]):
+            requirements.append("Include beach, lake or water activities")
         
-        if "food" in profile_lower or "cuisine" in profile_lower:
-            requirements.append("- INCLUDE: Local food experiences, restaurants, markets")
+        if any(word in profile_lower for word in ["food", "cuisine", "restaurant", "eating", "dining"]):
+            requirements.append("Include local food experiences, restaurants, markets")
+        
+        if any(word in profile_lower for word in ["relaxed", "slow", "chill", "leisurely"]):
+            requirements.append("Prefer relaxed pace activities")
+        elif any(word in profile_lower for word in ["fast", "busy", "active", "energetic"]):
+            requirements.append("Prefer active, fast-paced experiences")
+        
+        if any(word in profile_lower for word in ["shopping", "shop", "mall", "market"]):
+            requirements.append("Include shopping opportunities")
         
         if not requirements:
-            return "No specific requirements detected"
+            return "Looking for popular attractions and experiences suitable for tourists"
         
-        return "\n".join(requirements)
-    
-    def _validate_attractions(self, raw_attractions: List[Dict], city: str) -> List[Attraction]:
-        """Validate and convert raw attraction data to Attraction objects."""
-        validated = []
-        
-        for i, attr in enumerate(raw_attractions):
-            if not isinstance(attr, dict):
-                print(f"Skipping non-dict item {i}: {type(attr)}")
-                continue
-            
-            # Ensure required fields
-            attr.setdefault("name", f"Attraction {i+1} in {city}")
-            attr.setdefault("short_description", f"Popular attraction in {city}")
-            
-            # Handle price - ensure it's a number
-            price = attr.get("approx_price_per_person", 15.0)
-            try:
-                if isinstance(price, (int, float)):
-                    attr["approx_price_per_person"] = float(price)
-                elif isinstance(price, str):
-                    # Try to extract number from string
-                    import re
-                    numbers = re.findall(r'\d+\.?\d*', price)
-                    if numbers:
-                        attr["approx_price_per_person"] = float(numbers[0])
-                    else:
-                        attr["approx_price_per_person"] = 15.0
-                else:
-                    attr["approx_price_per_person"] = 15.0
-            except (ValueError, TypeError):
-                attr["approx_price_per_person"] = 15.0
-            
-            attr.setdefault("tags", ["sightseeing"])
-            attr.setdefault("reason_for_user", f"Recommended attraction in {city}")
-            
-            try:
-                attraction = Attraction(**attr)
-                validated.append(attraction)
-            except Exception as e:
-                print(f"⚠️ Skipping invalid attraction {i+1} '{attr.get('name', 'unknown')}': {e}")
-                continue
-        
-        return validated
+        return "; ".join(requirements)
