@@ -106,7 +106,7 @@ class GooglePlacesAgent:
         url = "https://maps.googleapis.com/maps/api/place/details/json"
         params = {
             "place_id": place_id,
-            "fields": "name,geometry,opening_hours,price_level,types,rating,user_ratings_total,wheelchair_accessible_entrance",
+            "fields": "name,geometry,opening_hours,price_level,types,rating,user_ratings_total,wheelchair_accessible_entrance,photos",
             "key": self.api_key
         }
         
@@ -128,7 +128,10 @@ class GooglePlacesAgent:
             enriched_data["tags"] = []
 
         enriched_data["google_place_id"] = place_id
-        
+        photos = details.get("photos", [])
+
+        if photos and isinstance(photos, list):
+            enriched_data["google_photo_reference"] = photos[0].get("photo_reference")
         if "opening_hours" in details:
             enriched_data["opening_hours"] = details["opening_hours"]
         

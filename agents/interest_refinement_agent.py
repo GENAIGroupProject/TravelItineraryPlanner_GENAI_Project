@@ -1,318 +1,295 @@
 import json
+import re
 from typing import Dict, Optional
+
 from utils.llm_client import LLMClient
-from utils.json_parser import JSONParser
 from utils.data_structures import PreferenceState, TripConstraints, TravelProfile
 from config import Config
-from utils.logging_utils import log_step, log_agent_communication, log_agent_output
+from utils.logging_utils import log_step, log_agent_output, log_agent_communication
+
 
 class InterestRefinementAgent:
-    """Agent for refining user interests and selecting destination city."""
-    
+    """
+    LLM-only dialogue agent.
+
+    Requirements:
+    - Questions must come ONLY from the LLM (no default questions).
+    - Ask at least one question: first turn must be ask_question.
+    - May ask fewer than 3 if it can finalize early (after at least one question).
+    - Output should be JSON (for structured handling), but if parsing fails we
+      re-ask the LLM to fix output or return question-only.
+    """
+
     def __init__(self, llm_client: Optional[LLMClient] = None):
         self.llm_client = llm_client or LLMClient()
-        self.json_parser = JSONParser()
-        self.max_turns = Config.MAX_DIALOGUE_TURNS
-        log_step("INTEREST_REFINEMENT", "Interest refinement agent initialized")
-    
-    def generate_dialogue_prompt(self, state: PreferenceState, last_user_msg: str,
-                                budget: float, people: int, days: int) -> str:
-        """Generate OPTIMIZED prompt for dialogue turn."""
-        
-        # Extract only essential information
-        user_prefs = self._extract_user_preferences_optimized(state, last_user_msg)
-        
-        log_step("INTEREST_REFINEMENT", f"Generating dialogue prompt for {days}-day trip, budget {budget}€", level="debug")
-        
-        prompt = f"""You are a travel assistant. User wants a {days}-day trip for {people}, budget {budget}EUR.
+        log_step("INTEREST_REFINEMENT", "Interest refinement agent initialized (LLM-only questions)")
 
-    Preferences: {user_prefs}
-    Last message: "{last_user_msg}"
+    # ----------------------------
+    # JSON extraction (no JSONParser dependency)
+    # ----------------------------
+    def _extract_json_object(self, text: str) -> Optional[Dict]:
+        if not text:
+            return None
 
-    Task: If enough info, recommend ONE city. Else, ask ONE clarifying question.
-    Focus on interests, pace, constraints. Skip budget/people/days questions.
+        # direct parse
+        try:
+            obj = json.loads(text)
+            return obj if isinstance(obj, dict) else None
+        except Exception:
+            pass
 
-    JSON only: {{
-    "action": "ask_question/finalize",
-    "question": "string or empty",
-    "chosen_city": "string or null",
-    "refined_profile": "short summary"
-    }}"""
+        # attempt extract first {...}
+        m = re.search(r"\{.*\}", text, flags=re.DOTALL)
+        if not m:
+            return None
 
-        return prompt
+        candidate = m.group(0)
+        try:
+            obj = json.loads(candidate)
+            return obj if isinstance(obj, dict) else None
+        except Exception:
+            return None
 
-    def _extract_user_preferences_optimized(self, state: PreferenceState, last_user_msg: str) -> str:
-        """Extract preferences more efficiently."""
-        # Combine all slots into one string for faster processing
-        preferences = []
-        
+    def _compact_prefs(self, state: PreferenceState, last_user_msg: str) -> str:
+        parts = []
         for key in ["activities", "pace", "food", "constraints"]:
-            value = state.slots.get(key, "")
-            if value and len(value) < 100:  # Limit length
-                preferences.append(f"{key}: {value[:80]}")  # Truncate long values
-        
-        # Add key terms from last message
-        lower_msg = last_user_msg.lower()
-        key_terms = []
-        
-        for term, label in [
-            ("hiking", "nature"), ("forest", "nature"), ("park", "nature"),
-            ("museum", "culture"), ("historical", "culture"),
-            ("relaxed", "slow pace"), ("fast", "busy pace"),
-            ("food", "cuisine"), ("restaurant", "dining")
-        ]:
-            if term in lower_msg:
-                key_terms.append(label)
-        
-        if key_terms:
-            preferences.append(f"Recent: {', '.join(set(key_terms))}")
-        
-        return " | ".join(preferences) if preferences else "General preferences"
-        
-    def _build_profile_summary(self, state: PreferenceState) -> str:
-        """Helper to build profile summary."""
-        summary = []
-        for key, label in [
-            ("activities", "Activities"),
-            ("pace", "Pace"),
-            ("food", "Food"),
-            ("constraints", "Constraints"),
-            ("budget", "Budget")
-        ]:
-            value = state.slots.get(key, "") or "not specified yet"
-            summary.append(f"{label}: {value}")
-        return "\n".join(summary)
-    
-    def process_turn(self, state: PreferenceState, last_user_msg: str,
-                    budget: float, people: int, days: int) -> Dict:
-        """Process a dialogue turn."""
-        log_step("INTEREST_REFINEMENT", f"Processing dialogue turn (turn {state.turns + 1}/{self.max_turns})")
+            v = (state.slots.get(key) or "").strip()
+            if v:
+                parts.append(v[:200])
+        if not parts and last_user_msg:
+            parts.append(last_user_msg[:260])
+        return " | ".join(parts) if parts else (last_user_msg[:260] if last_user_msg else "not specified")
+
+    # ----------------------------
+    # LLM calls
+    # ----------------------------
+    def _prompt_turn_json(
+        self,
+        prefs: str,
+        last_user_msg: str,
+        budget: float,
+        people: int,
+        days: int,
+        questions_asked_so_far: int,
+    ) -> str:
+        """
+        JSON-only prompt for either asking a question or finalizing.
+        We keep it short for speed.
+        """
+        must_ask = "YES" if questions_asked_so_far <= 0 else "NO"
+
+        return f"""Return ONLY valid JSON (no markdown, no extra text).
+
+Trip:
+days={days}, people={people}, budget_eur={budget}
+
+Preferences: {prefs}
+Last user message: {last_user_msg}
+
+RULES:
+- Ask at most one question this turn.
+- If MUST_ASK_FIRST_QUESTION=YES then action MUST be "ask_question".
+- Otherwise action can be "ask_question" or "finalize".
+- Keep the question short and specific.
+
+MUST_ASK_FIRST_QUESTION={must_ask}
+
+Schema:
+{{
+  "action": "ask_question" or "finalize",
+  "question": "string (required if ask_question, empty if finalize)",
+  "chosen_city": "string or null",
+  "refined_profile": "short summary string",
+  "constraints": {{
+    "with_children": true/false,
+    "with_disabled": true/false,
+    "budget": number,
+    "people": number
+  }}
+}}
+"""
+
+    def _prompt_fix_json(self, bad_output: str) -> str:
+        """
+        Ask LLM to convert whatever it wrote into valid JSON of the required schema.
+        """
+        return f"""Convert the following into ONLY valid JSON (no markdown, no extra text).
+If fields are missing, fill them with null/empty values but keep the schema.
+
+Required schema:
+{{
+  "action": "ask_question" or "finalize",
+  "question": "string",
+  "chosen_city": "string or null",
+  "refined_profile": "string",
+  "constraints": {{
+    "with_children": true/false,
+    "with_disabled": true/false,
+    "budget": number,
+    "people": number
+  }}
+}}
+
+BAD_OUTPUT:
+{bad_output}
+"""
+
+    def _prompt_question_only(self, prefs: str, last_user_msg: str) -> str:
+        """
+        Absolute fallback that still respects your requirement:
+        question comes from LLM, and we accept plain text (not JSON).
+        """
+        return f"""Write ONE short question to clarify the user's travel preferences.
+No JSON, no bullets—just the question as a single sentence.
+
+Preferences: {prefs}
+Last user message: {last_user_msg}
+"""
+
+    def _normalize_output(self, parsed: Dict, budget: float, people: int) -> Dict:
+        """
+        Clean up the parsed dict and ensure required fields exist.
+        """
+        action = (parsed.get("action") or "").strip().lower()
+        if action not in ("ask_question", "finalize"):
+            action = "ask_question"
+
+        question = (parsed.get("question") or "").strip()
+        chosen_city = parsed.get("chosen_city")
+        refined_profile = (parsed.get("refined_profile") or "").strip()
+
+        constraints = parsed.get("constraints") or {}
+        constraints = {
+            "with_children": bool(constraints.get("with_children", False)),
+            "with_disabled": bool(constraints.get("with_disabled", False)),
+            "budget": float(constraints.get("budget", budget)),
+            "people": int(constraints.get("people", people)),
+        }
+
+        return {
+            "action": action,
+            "question": question,
+            "chosen_city": chosen_city,
+            "refined_profile": refined_profile,
+            "constraints": constraints,
+        }
+
+    # ----------------------------
+    # Public API
+    # ----------------------------
+    def process_turn(
+        self,
+        state: PreferenceState,
+        last_user_msg: str,
+        budget: float,
+        people: int,
+        days: int,
+        questions_asked_so_far: int = 0,
+    ) -> Dict:
+        """
+        Returns dict with:
+          action: ask_question/finalize
+          question / chosen_city / refined_profile / constraints
+        """
+
+        log_step("INTEREST_REFINEMENT", "Processing dialogue turn (LLM-only)")
+        last_user_msg = (last_user_msg or "").strip()
+        prefs = self._compact_prefs(state, last_user_msg)
+
+        prompt = self._prompt_turn_json(
+            prefs=prefs,
+            last_user_msg=last_user_msg,
+            budget=budget,
+            people=people,
+            days=days,
+            questions_asked_so_far=questions_asked_so_far,
+        )
+
         log_agent_communication(
             from_agent="InterestRefinementAgent",
             to_agent="LLM",
             message_type="dialogue_turn_request",
-            data={
-                "user_message": last_user_msg[:100],
-                "budget": budget,
-                "people": people,
-                "days": days,
-                "current_turn": state.turns + 1
-            }
+            data={"questions_asked_so_far": questions_asked_so_far, "prompt_preview": prompt[:260]},
         )
-        
-        prompt = self.generate_dialogue_prompt(state, last_user_msg, budget, people, days)
-        
-        try:
-            raw_response = self.llm_client.generate(prompt, temperature=0.7)
-            
-            log_step("INTEREST_REFINEMENT", f"Received LLM response ({len(raw_response)} chars)")
-            log_agent_communication(
-                from_agent="LLM",
-                to_agent="InterestRefinementAgent",
-                message_type="dialogue_turn_response",
-                data={
-                    "response_length": len(raw_response),
-                    "preview": raw_response[:200]
-                }
-            )
-            
-            response_data = self.json_parser.parse_response(raw_response)
-            
-            # Validate and add defaults
-            response_data = self._validate_response(response_data, budget, people)
-            
-            # Log the response
-            log_agent_output(
-                "InterestRefinementAgent",
-                response_data,
-                context=f"turn_{state.turns + 1}"
-            )
-            
-            # If finalizing, ensure city recommendation
-            if response_data["action"] == "finalize" and not response_data["chosen_city"]:
-                log_step("INTEREST_REFINEMENT", "No city chosen, getting recommendation")
-                # Get city recommendation based on preferences
-                response_data["chosen_city"] = self._get_city_recommendation(
-                    state, last_user_msg, budget, days
-                )
-            
-            log_step("INTEREST_REFINEMENT", f"Action: {response_data['action']}, City: {response_data.get('chosen_city', 'None')}")
-            
-            return response_data
-            
-        except Exception as e:
-            error_msg = f"Error in dialogue turn: {e}"
-            log_step("INTEREST_REFINEMENT", error_msg, level="error")
-            return self._create_fallback_response(state, budget, people)
-    
-    def _get_city_recommendation(self, state: PreferenceState, last_user_msg: str,
-                                budget: float, days: int) -> str:
-        """Use LLM to recommend a city based on user preferences."""
-        user_prefs = self._extract_user_preferences_optimized(state, last_user_msg)
-        
-        log_step("INTEREST_REFINEMENT", "Getting city recommendation from LLM")
-        log_agent_communication(
-            from_agent="InterestRefinementAgent",
-            to_agent="LLM",
-            message_type="city_recommendation_request",
-            data={
-                "preferences": user_prefs,
-                "budget": budget,
-                "days": days
+
+        raw = self.llm_client.generate(prompt, temperature=0.3)
+        parsed = self._extract_json_object(raw)
+
+        # Retry 1: ask LLM to fix JSON
+        if parsed is None:
+            fix_prompt = self._prompt_fix_json(raw[:2000])
+            raw2 = self.llm_client.generate(fix_prompt, temperature=0.0)
+            parsed = self._extract_json_object(raw2)
+
+        # Retry 2: still no JSON => get question-only from LLM (no defaults!)
+        if parsed is None:
+            q_prompt = self._prompt_question_only(prefs, last_user_msg)
+            q_text = (self.llm_client.generate(q_prompt, temperature=0.2) or "").strip()
+            # Force ask_question if first turn; otherwise still ask question (safe)
+            out = {
+                "action": "ask_question",
+                "question": q_text if q_text else (self.llm_client.generate(q_prompt, temperature=0.2) or "").strip(),
+                "chosen_city": None,
+                "refined_profile": "",
+                "constraints": {
+                    "with_children": False,
+                    "with_disabled": False,
+                    "budget": float(budget),
+                    "people": int(people),
+                },
             }
-        )
-        
-        prompt = f"""Based on user preferences, recommend ONE specific city:
+            # Enforce: first turn must be a question
+            if questions_asked_so_far <= 0:
+                out["action"] = "ask_question"
+            log_agent_output("InterestRefinementAgent", out, context="turn_output_question_only_fallback")
+            return out
 
-USER PREFERENCES:
-{user_prefs}
+        out = self._normalize_output(parsed, budget=budget, people=people)
 
-TRIP DETAILS:
-- Budget: {budget} EUR for {days} days
-- Must match user's stated preferences
+        # Enforce: first turn must be ask_question (even if model tried finalize)
+        if questions_asked_so_far <= 0:
+            out["action"] = "ask_question"
+            # If question missing, ask LLM again for one (still no defaults)
+            if not out["question"]:
+                q_prompt = self._prompt_question_only(prefs, last_user_msg)
+                out["question"] = (self.llm_client.generate(q_prompt, temperature=0.2) or "").strip()
 
-IMPORTANT: If user mentioned hiking, forests, parks, or nature - recommend a city with good outdoor activities.
-If user said NO to cultural/historical - avoid cultural cities.
+        # If action ask_question but question empty => ask LLM for question (no defaults)
+        if out["action"] == "ask_question" and not out["question"]:
+            q_prompt = self._prompt_question_only(prefs, last_user_msg)
+            out["question"] = (self.llm_client.generate(q_prompt, temperature=0.2) or "").strip()
 
-Return ONLY the city name, nothing else.
-Example: "Interlaken" or "Salzburg" or "Vancouver"
-"""
-        
-        try:
-            response = self.llm_client.generate(prompt, temperature=0.7)
-            city = response.strip()
-            
-            # Clean response
-            city = city.replace('"', '').replace("'", "").split('\n')[0].split(',')[0].strip()
-            
-            log_agent_communication(
-                from_agent="LLM",
-                to_agent="InterestRefinementAgent",
-                message_type="city_recommendation_response",
-                data={
-                    "raw_city": response,
-                    "cleaned_city": city
-                }
-            )
-            
-            if 2 < len(city) < 50 and city[0].isalpha():
-                log_step("INTEREST_REFINEMENT", f"LLM Recommended City: {city}")
-                return city
-            else:
-                log_step("INTEREST_REFINEMENT", f"Invalid city recommendation: '{city}', using fallback", level="warning")
-                return self._get_fallback_city(user_prefs)
-                
-        except Exception as e:
-            log_step("INTEREST_REFINEMENT", f"Error getting city from LLM: {e}", level="error")
-            return self._get_fallback_city(user_prefs)
-    
-    def _get_fallback_city(self, user_prefs: str) -> str:
-        """Get fallback city based on preferences."""
-        log_step("INTEREST_REFINEMENT", "Using fallback city selection")
-        
-        if "hiking" in user_prefs.lower() or "forest" in user_prefs.lower():
-            city = "Interlaken"  # Good for hiking/nature
-            log_step("INTEREST_REFINEMENT", f"Fallback: {city} (hiking/nature)")
-        elif "beach" in user_prefs.lower() or "coast" in user_prefs.lower():
-            city = "Barcelona"
-            log_step("INTEREST_REFINEMENT", f"Fallback: {city} (beach)")
-        else:
-            # Let the LLM try one more time with a simpler prompt
-            try:
-                simple_prompt = "Recommend one city for a relaxed trip. City name only."
-                response = self.llm_client.generate(simple_prompt, temperature=0.5)
-                city = response.strip().split('\n')[0]
-                log_step("INTEREST_REFINEMENT", f"Simple prompt fallback: {city}")
-            except:
-                city = "Paris"  # Last resort fallback
-                log_step("INTEREST_REFINEMENT", f"Last resort fallback: {city}")
-        
-        return city
-    
-    def _validate_response(self, data: Dict, budget: float, people: int) -> Dict:
-        """Validate and add default values to response."""
-        # Ensure action is valid
-        if data.get("action") not in ["ask_question", "finalize"]:
-            data["action"] = "ask_question"
-            log_step("INTEREST_REFINEMENT", "Invalid action, defaulting to 'ask_question'", level="debug")
-        
-        # Ensure constraints exist
-        if not isinstance(data.get("constraints"), dict):
-            data["constraints"] = {}
-        
-        # Set required constraint fields
-        constraints = data["constraints"]
-        constraints.setdefault("with_children", None)
-        constraints.setdefault("with_disabled", None)
-        constraints.setdefault("budget", budget)
-        constraints.setdefault("people", people)
-        
-        # Set other defaults
-        data.setdefault("question", "")
-        data.setdefault("refined_profile", "User preferences not fully specified")
-        data.setdefault("chosen_city", None)
-        data.setdefault("travel_style", None)
-        
-        log_step("INTEREST_REFINEMENT", f"Validated response: action={data['action']}, city={data['chosen_city']}", level="debug")
-        
-        return data
-    
-    def _create_fallback_response(self, state: PreferenceState, 
-                                 budget: float, people: int) -> Dict:
-        """Create fallback response when LLM fails."""
-        log_step("INTEREST_REFINEMENT", "Creating fallback response", level="warning")
-        
-        return {
-            "action": "ask_question",
-            "question": "What type of activities or attractions interest you most?",
-            "refined_profile": "Preferences still being refined",
-            "chosen_city": None,
-            "constraints": {
-                "with_children": False,
-                "with_disabled": False,
-                "budget": budget,
-                "people": people
-            },
-            "travel_style": "medium"
-        }
-    
+        log_agent_output("InterestRefinementAgent", out, context="turn_output")
+        return out
+
     def create_final_profile(self, state: PreferenceState, llm_output: Dict) -> TravelProfile:
-        """Create final travel profile from dialogue results."""
-        log_step("INTEREST_REFINEMENT", "Creating final travel profile")
-        
-        # If no city chosen, get one from LLM
-        chosen_city = llm_output.get("chosen_city")
+        chosen_city = (llm_output.get("chosen_city") or "").strip()
+        refined_profile = (llm_output.get("refined_profile") or "").strip()
+        constraints_dict = llm_output.get("constraints") or {}
+
+        # If chosen_city missing, we ask LLM quickly for a city (still LLM-based)
         if not chosen_city:
-            log_step("INTEREST_REFINEMENT", "No city in output, getting recommendation")
-            chosen_city = self._get_city_recommendation(
-                state, 
-                state.slots.get("last_message", ""), 
-                llm_output["constraints"]["budget"],
-                3  # default days
-            )
-        
+            prefs = self._compact_prefs(state, "")
+            city_prompt = f"""Return ONLY the city name as plain text (no JSON).
+Pick one destination city that fits: {prefs}
+"""
+            chosen_city = (self.llm_client.generate(city_prompt, temperature=0.0) or "").strip() or "Paris"
+
+        if not refined_profile:
+            refined_profile = self._compact_prefs(state, "")
+
+        constraints = TripConstraints(
+            with_children=bool(constraints_dict.get("with_children", False)),
+            with_disabled=bool(constraints_dict.get("with_disabled", False)),
+            budget=float(constraints_dict.get("budget", getattr(Config, "DEFAULT_BUDGET", 800))),
+            people=int(constraints_dict.get("people", getattr(Config, "DEFAULT_PEOPLE", 2))),
+        )
+
         profile = TravelProfile(
-            refined_profile=llm_output["refined_profile"],
             chosen_city=chosen_city,
-            constraints=TripConstraints(**llm_output["constraints"]),
-            travel_style=llm_output["travel_style"],
-            semantic_profile_slots=state.slots,
-            interest_embedding=(
-                state.global_embedding.tolist() 
-                if state.global_embedding is not None 
-                else None
-            )
+            refined_profile=refined_profile,
+            constraints=constraints,
         )
-        
+
         log_step("INTEREST_REFINEMENT", f"Profile created: {chosen_city}")
-        log_agent_output(
-            "InterestRefinementAgent",
-            {
-                "chosen_city": chosen_city,
-                "refined_profile": llm_output["refined_profile"][:100],
-                "constraints": llm_output["constraints"]
-            },
-            context="final_profile"
-        )
-        
         return profile
