@@ -1,3 +1,7 @@
 /venv
 .env
 /myenv
+/logs
+travel_planner.log
+/cache
+/.llm_cache
