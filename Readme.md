@@ -1,4 +1,4 @@
-# Local AI Travel Planner
+# Travel Iternary Planner
 
 A Python-based travel itinerary generator that runs **fully offline** using a **local LLM powered by Ollama**. The application generates customized travel plans based on user input without relying on external APIs.
 
