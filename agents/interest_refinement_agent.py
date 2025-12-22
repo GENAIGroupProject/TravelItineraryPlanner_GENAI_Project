@@ -223,9 +223,29 @@ Last user message: {last_user_msg}
 
         # Retry 2: still no JSON => get question-only from LLM (no defaults!)
         if parsed is None:
+            # --- Suggested change: enforce min 2 questions and max 3 questions in code ---
+            min_questions = 2
+            max_questions = 3
+
+            # Hard cap: if already at/over max, finalize (no more questions)
+            if questions_asked_so_far >= max_questions:
+                out = {
+                    "action": "finalize",
+                    "question": "",
+                    "chosen_city": None,
+                    "refined_profile": "",
+                    "constraints": {
+                        "with_children": False,
+                        "with_disabled": False,
+                        "budget": float(budget),
+                        "people": int(people),
+                    },
+                }
+                log_agent_output("InterestRefinementAgent", out, context="turn_output_finalize_due_to_max_questions_fallback")
+                return out
+
             q_prompt = self._prompt_question_only(prefs, last_user_msg)
             q_text = (self.llm_client.generate(q_prompt, temperature=0.2) or "").strip()
-            # Force ask_question if first turn; otherwise still ask question (safe)
             out = {
                 "action": "ask_question",
                 "question": q_text if q_text else (self.llm_client.generate(q_prompt, temperature=0.2) or "").strip(),
@@ -238,9 +258,11 @@ Last user message: {last_user_msg}
                     "people": int(people),
                 },
             }
-            # Enforce: first turn must be a question
-            if questions_asked_so_far <= 0:
+
+            # Enforce: must ask at least min_questions questions before finalizing
+            if questions_asked_so_far < min_questions:
                 out["action"] = "ask_question"
+
             log_agent_output("InterestRefinementAgent", out, context="turn_output_question_only_fallback")
             return out
 
@@ -258,6 +280,22 @@ Last user message: {last_user_msg}
         if out["action"] == "ask_question" and not out["question"]:
             q_prompt = self._prompt_question_only(prefs, last_user_msg)
             out["question"] = (self.llm_client.generate(q_prompt, temperature=0.2) or "").strip()
+
+        # --- Suggested change: enforce min 2 questions and max 3 questions in code ---
+        min_questions = 2
+        max_questions = 3
+
+        # Must ask at least 2 questions: if fewer than 2 asked so far, force ask_question
+        if questions_asked_so_far < min_questions:
+            out["action"] = "ask_question"
+            if not out.get("question"):
+                q_prompt = self._prompt_question_only(prefs, last_user_msg)
+                out["question"] = (self.llm_client.generate(q_prompt, temperature=0.2) or "").strip()
+
+        # Must ask at most 3 questions: if already asked 3 or more, force finalize
+        if questions_asked_so_far >= max_questions:
+            out["action"] = "finalize"
+            out["question"] = ""
 
         log_agent_output("InterestRefinementAgent", out, context="turn_output")
         return out

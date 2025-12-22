@@ -1,0 +1,9 @@
+
+2025-12-15T13:28:59.029454
+Traceback (most recent call last):
+  File "/home/quack/Documents/TravelItineraryPlanner_GENAI_Project/main.py", line 611, in main
+    planner.run_pipeline()
+  File "/home/quack/Documents/TravelItineraryPlanner_GENAI_Project/main.py", line 596, in run_pipeline
+    self.display_results(profile, itinerary, evaluation, affordable)
+    ^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'TravelPlanner' object has no attribute 'display_results'

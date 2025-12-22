@@ -1,0 +1,1683 @@
+{
+  "metadata": {
+    "generated": "2025-12-15T12:53:13.038888",
+    "destination": "Seville",
+    "travelers": 1,
+    "days": 3,
+    "constraints": {
+      "with_children": false,
+      "with_disabled": false
+    },
+    "budget": {
+      "total": 200.0,
+      "estimated_cost": 100.0,
+      "remaining": 100.0
+    }
+  },
+  "profile": {
+    "refined_profile": "Activities: not specified yet\nPace: not specified yet\nFood: city explore and food traditional yes\nConstraints: not specified yet\nBudget: Budget is 200.0 EUR for 1 people for 2 days",
+    "chosen_city": "Seville",
+    "constraints": {
+      "with_children": false,
+      "with_disabled": false,
+      "budget": 200.0,
+      "people": 1
+    },
+    "travel_style": "medium",
+    "semantic_profile_slots": {
+      "activities": "",
+      "pace": "",
+      "food": "city explore and food traditional yes",
+      "constraints": "",
+      "budget": "Budget is 200.0 EUR for 1 people for 2 days",
+      "other": ""
+    },
+    "interest_embedding": [
+      0.024700146168470383,
+      0.03204871714115143,
+      0.01214844360947609,
+      0.044548191130161285,
+      -0.01923183910548687,
+      -0.018608883023262024,
+      0.03290242701768875,
+      -0.025644894689321518,
+      -0.05642221122980118,
+      0.006224153563380241,
+      0.03487806022167206,
+      -0.034008659422397614,
+      -0.06660280376672745,
+      0.0352136492729187,
+      0.02007647231221199,
+      -0.012711558490991592,
+      0.02368197962641716,
+      -0.05010986328125,
+      0.005872281268239021,
+      -0.006370515562593937,
+      -0.06630221754312515,
+      -0.0321028046309948,
+      -0.0042099859565496445,
+      0.013478092849254608,
+      -0.0003236879128962755,
+      0.016035744920372963,
+      0.01429014466702938,
+      0.02947290614247322,
+      0.03758729621767998,
+      -0.033137161284685135,
+      -0.00495574064552784,
+      0.045018818229436874,
+      0.05027587711811066,
+      -0.0075516183860599995,
+      -0.014395379461348057,
+      0.024478737264871597,
+      0.0034457454457879066,
+      -0.030362030491232872,
+      0.02025420404970646,
+      0.02156936563551426,
+      -0.018244706094264984,
+      -0.03313681483268738,
+      -0.010607215575873852,
+      -0.017939910292625427,
+      0.01921948418021202,
+      0.011229259893298149,
+      -0.049648866057395935,
+      0.03510938957333565,
+      0.038388241082429886,
+      0.01634512096643448,
+      0.013801191002130508,
+      -0.006682868581265211,
+      -0.0037143053486943245,
+      -0.04062281921505928,
+      0.03148094564676285,
+      -0.0065176822245121,
+      -0.029976025223731995,
+      0.02078746259212494,
+      0.01741039752960205,
+      -0.002335872733965516,
+      0.031617868691682816,
+      -0.007886589504778385,
+      -0.07107894122600555,
+      0.02690304070711136,
+      0.016357969492673874,
+      -0.022311344742774963,
+      -0.061842553317546844,
+      -0.0074912309646606445,
+      0.01628827303647995,
+      -0.0411032997071743,
+      -0.023182865232229233,
+      -0.013008560054004192,
+      0.02495633438229561,
+      -0.027554312720894814,
+      0.0030933767557144165,
+      -0.014421558007597923,
+      0.007954579778015614,
+      -0.015509938821196556,
+      0.005526205524802208,
+      -0.016952810809016228,
+      -0.026593849062919617,
+      -0.003081059316173196,
+      -0.017553620040416718,
+      0.0024556941352784634,
+      -0.014094713144004345,
+      0.009933809749782085,
+      0.02454937994480133,
+      0.0015788599848747253,
+      0.011444437317550182,
+      0.019534090533852577,
+      0.020454950630664825,
+      -0.02575260028243065,
+      -0.002475537359714508,
+      -0.0074381292797625065,
+      -0.05549971014261246,
+      0.0038520637899637222,
+      -0.006160086486488581,
+      -0.009711689315736294,
+      -0.006136302836239338,
+      0.14792552590370178,
+      0.02051236294209957,
+      0.03182182088494301,
+      0.0597083643078804,
+      -0.03108822926878929,
+      -0.014025947079062462,
+      -0.0562150664627552,
+      -0.015421178191900253,
+      0.012047046795487404,
+      0.022848011925816536,
+      0.008367807604372501,
+      -0.04092080146074295,
+      -0.0034817447885870934,
+      -0.018895229324698448,
+      -0.039389144629240036,
+      -0.008607327938079834,
+      0.007072568405419588,
+      0.0023702802136540413,
+      -0.041208986192941666,
+      0.06143156811594963,
+      -0.011954603716731071,
+      0.029351340606808662,
+      -0.006998833734542131,
+      0.010401546023786068,
+      0.0010108212009072304,
+      0.008409400470554829,
+      -0.05701958388090134,
+      0.026834363117814064,
+      -2.1957393260215523e-33,
+      -0.02358468621969223,
+      -0.02223467081785202,
+      0.016644394025206566,
+      0.014799265190958977,
+      -7.165397983044386e-05,
+      -0.00800750870257616,
+      -0.019640780985355377,
+      -0.022343194112181664,
+      -0.018438447266817093,
+      -0.029306232929229736,
+      0.03085840493440628,
+      -0.02018841728568077,
+      -0.018111206591129303,
+      0.03630439564585686,
+      0.08169343322515488,
+      -0.0348208025097847,
+      0.027154358103871346,
+      0.027072731405496597,
+      0.02007354609668255,
+      -0.013803050853312016,
+      0.010289527475833893,
+      0.01928217150270939,
+      0.0271224994212389,
+      -0.036779940128326416,
+      0.0033260229974985123,
+      -0.02450431138277054,
+      0.030553042888641357,
+      -0.026499353349208832,
+      0.05798237770795822,
+      0.010603932663798332,
+      0.029129400849342346,
+      0.0066489665769040585,
+      -0.035316482186317444,
+      -0.0333225391805172,
+      -0.013898953795433044,
+      0.03664598986506462,
+      0.01701291650533676,
+      -0.040672771632671356,
+      -0.0021991152316331863,
+      0.02506214939057827,
+      -0.04996729642152786,
+      -0.005360089708119631,
+      -0.011888183653354645,
+      0.008621380664408207,
+      -0.015009977854788303,
+      0.01967175304889679,
+      0.040106400847435,
+      -0.021033499389886856,
+      -0.034834276884794235,
+      0.011435630731284618,
+      -0.01242633443325758,
+      -0.024004342034459114,
+      -0.08588913083076477,
+      0.00983555056154728,
+      -0.006541098468005657,
+      0.00733988918364048,
+      0.03900090232491493,
+      -0.01796419732272625,
+      0.013057623989880085,
+      -0.01684369333088398,
+      0.02660319022834301,
+      0.04817045480012894,
+      0.013374969363212585,
+      -0.004193412605673075,
+      -0.011121349409222603,
+      0.02568240649998188,
+      -0.007172722369432449,
+      -0.006168867461383343,
+      0.023262914270162582,
+      0.0056755682453513145,
+      -0.030380405485630035,
+      0.03446262329816818,
+      0.0377638004720211,
+      0.015229849144816399,
+      0.025286369025707245,
+      0.02583937905728817,
+      0.022106554359197617,
+      0.022415710613131523,
+      -0.004267973825335503,
+      0.010627366602420807,
+      0.009568726643919945,
+      0.013672756031155586,
+      -0.009673157706856728,
+      0.08478698879480362,
+      0.02497202903032303,
+      0.025548065081238747,
+      0.013322219252586365,
+      -0.0031231555622071028,
+      0.04236266389489174,
+      0.025173543021082878,
+      -0.060669638216495514,
+      -0.025687240064144135,
+      3.6507844924926758e-06,
+      -0.017276285216212273,
+      -0.015807000920176506,
+      8.896346958534466e-34,
+      -0.021778903901576996,
+      -0.003827817738056183,
+      -0.014032404869794846,
+      0.054895102977752686,
+      0.032226383686065674,
+      -0.0005060220137238503,
+      -0.015084420330822468,
+      -0.011807980947196484,
+      0.0008292011916637421,
+      0.04514944180846214,
+      -0.03291494771838188,
+      -0.04034651815891266,
+      0.06434483826160431,
+      0.013824746944010258,
+      0.050022996962070465,
+      0.018049605190753937,
+      0.05347771197557449,
+      0.03583510220050812,
+      0.0024415655061602592,
+      0.006956197787076235,
+      -0.04553809389472008,
+      0.01278921589255333,
+      -0.04555780813097954,
+      -0.04326692596077919,
+      -0.05079172924160957,
+      0.06206700950860977,
+      -0.009161045774817467,
+      0.017804788425564766,
+      -0.06447459012269974,
+      -0.0194866880774498,
+      -0.009887607768177986,
+      -0.042710088193416595,
+      -0.0140227060765028,
+      -0.004199041984975338,
+      -0.019635286182165146,
+      0.05262090265750885,
+      -0.020592788234353065,
+      0.023285724222660065,
+      0.010508082807064056,
+      0.06732475757598877,
+      0.001974882557988167,
+      -0.022450994700193405,
+      -0.010305004194378853,
+      0.09750214219093323,
+      0.014724492095410824,
+      0.008506420068442822,
+      -0.0326044000685215,
+      -0.03156831115484238,
+      0.0019613709300756454,
+      -0.019218727946281433,
+      0.007369605824351311,
+      0.04167889803647995,
+      -0.04907526820898056,
+      -0.022070420905947685,
+      -0.004499628208577633,
+      0.006294091232120991,
+      0.0004944975953549147,
+      -0.029907194897532463,
+      -0.03342676907777786,
+      0.0004615657962858677,
+      0.014171155169606209,
+      0.01979154907166958,
+      -0.009071570821106434,
+      0.009337040595710278,
+      0.008105212822556496,
+      0.0004770481027662754,
+      -0.008340038359165192,
+      -0.03109554387629032,
+      -0.01070102583616972,
+      -0.0024639808107167482,
+      -0.011654114350676537,
+      -0.015124918892979622,
+      -0.03975412994623184,
+      0.005279745906591415,
+      -0.008305896073579788,
+      -0.0050263842567801476,
+      0.02775573544204235,
+      0.016938935965299606,
+      0.05124753341078758,
+      -0.0033398065716028214,
+      -0.032929230481386185,
+      -0.020964335650205612,
+      0.0026927620638161898,
+      -0.020723354071378708,
+      0.03873497620224953,
+      -0.007863474078476429,
+      -0.040947139263153076,
+      -0.000685092993080616,
+      -0.0023704692721366882,
+      0.05242210254073143,
+      -0.00932039599865675,
+      0.017707042396068573,
+      0.01632184349000454,
+      0.006835652980953455,
+      0.024090273305773735,
+      -1.5863324875908802e-08,
+      -0.00010040448978543282,
+      -0.006853603292256594,
+      -0.006226882804185152,
+      0.02339458465576172,
+      -0.001001196913421154,
+      -0.024454865604639053,
+      -0.0028651715256273746,
+      -0.0031999140046536922,
+      -0.02511928416788578,
+      0.060209523886442184,
+      -0.005795551463961601,
+      0.015044661238789558,
+      0.03532093018293381,
+      0.0074488939717411995,
+      -0.019378749653697014,
+      0.011431466788053513,
+      0.023059094324707985,
+      -0.0031088748946785927,
+      -0.04018809646368027,
+      -0.01296701468527317,
+      0.039477746933698654,
+      0.03452964127063751,
+      -0.03231047838926315,
+      -0.006279815919697285,
+      -0.026017965748906136,
+      0.0019737519323825836,
+      0.01018980611115694,
+      0.04249739646911621,
+      0.023176532238721848,
+      0.004179920069873333,
+      0.0013407899532467127,
+      0.033554695546627045,
+      -0.016775039955973625,
+      -0.014975150115787983,
+      0.02090945839881897,
+      -0.0840115025639534,
+      -0.03535953164100647,
+      0.0009120004251599312,
+      0.000912027433514595,
+      0.002528422512114048,
+      0.0008487282320857048,
+      -0.05956842750310898,
+      -0.00934846606105566,
+      0.029978148639202118,
+      -0.036652397364377975,
+      0.02822709269821644,
+      -0.035200007259845734,
+      -0.05104072391986847,
+      -0.014593956992030144,
+      -0.04140704870223999,
+      -0.045734308660030365,
+      0.0012000692076981068,
+      0.01001221127808094,
+      0.014700002036988735,
+      0.03317389264702797,
+      0.01508599054068327,
+      -0.007176384795457125,
+      0.004279776010662317,
+      0.0033368803560733795,
+      -0.0033499132841825485,
+      0.04491567611694336,
+      -0.015919238328933716,
+      -0.013944745995104313,
+      0.000685978215187788
+    ]
+  },
+  "attractions": [
+    {
+      "name": "La Brunilda",
+      "short_description": "Traditional Sevillian tavern serving tapas and wine",
+      "approx_price_per_person": 20.0,
+      "tags": [
+        "food",
+        "tavern",
+        "landmark",
+        "local"
+      ],
+      "reason_for_user": "Enjoy traditional Sevillian cuisine in a cozy atmosphere, matching the user's interest in local food experiences",
+      "google_place_id": "ChIJ0Y2ELBJsEg0RFdCaqrqPvpQ",
+      "opening_hours": {
+        "open_now": false,
+        "periods": [
+          {
+            "close": {
+              "day": 0,
+              "time": "1630"
+            },
+            "open": {
+              "day": 0,
+              "time": "1330"
+            }
+          },
+          {
+            "close": {
+              "day": 0,
+              "time": "2330"
+            },
+            "open": {
+              "day": 0,
+              "time": "2030"
+            }
+          },
+          {
+            "close": {
+              "day": 1,
+              "time": "1630"
+            },
+            "open": {
+              "day": 1,
+              "time": "1330"
+            }
+          },
+          {
+            "close": {
+              "day": 1,
+              "time": "2330"
+            },
+            "open": {
+              "day": 1,
+              "time": "2030"
+            }
+          },
+          {
+            "close": {
+              "day": 2,
+              "time": "1630"
+            },
+            "open": {
+              "day": 2,
+              "time": "1330"
+            }
+          },
+          {
+            "close": {
+              "day": 2,
+              "time": "2330"
+            },
+            "open": {
+              "day": 2,
+              "time": "2030"
+            }
+          },
+          {
+            "close": {
+              "day": 3,
+              "time": "1630"
+            },
+            "open": {
+              "day": 3,
+              "time": "1330"
+            }
+          },
+          {
+            "close": {
+              "day": 3,
+              "time": "2330"
+            },
+            "open": {
+              "day": 3,
+              "time": "2030"
+            }
+          },
+          {
+            "close": {
+              "day": 4,
+              "time": "1630"
+            },
+            "open": {
+              "day": 4,
+              "time": "1330"
+            }
+          },
+          {
+            "close": {
+              "day": 4,
+              "time": "2330"
+            },
+            "open": {
+              "day": 4,
+              "time": "2030"
+            }
+          },
+          {
+            "close": {
+              "day": 5,
+              "time": "1630"
+            },
+            "open": {
+              "day": 5,
+              "time": "1330"
+            }
+          },
+          {
+            "close": {
+              "day": 5,
+              "time": "2330"
+            },
+            "open": {
+              "day": 5,
+              "time": "2030"
+            }
+          },
+          {
+            "close": {
+              "day": 6,
+              "time": "1630"
+            },
+            "open": {
+              "day": 6,
+              "time": "1330"
+            }
+          },
+          {
+            "close": {
+              "day": 6,
+              "time": "2330"
+            },
+            "open": {
+              "day": 6,
+              "time": "2030"
+            }
+          }
+        ],
+        "weekday_text": [
+          "Monday: 1:30 – 4:30 PM, 8:30 – 11:30 PM",
+          "Tuesday: 1:30 – 4:30 PM, 8:30 – 11:30 PM",
+          "Wednesday: 1:30 – 4:30 PM, 8:30 – 11:30 PM",
+          "Thursday: 1:30 – 4:30 PM, 8:30 – 11:30 PM",
+          "Friday: 1:30 – 4:30 PM, 8:30 – 11:30 PM",
+          "Saturday: 1:30 – 4:30 PM, 8:30 – 11:30 PM",
+          "Sunday: 1:30 – 4:30 PM, 8:30 – 11:30 PM"
+        ]
+      },
+      "google_price_level": 2,
+      "location": {
+        "lat": 37.3883556,
+        "lng": -5.99945
+      },
+      "google_rating": 4.5,
+      "google_user_ratings_total": 4949,
+      "final_price_estimate": 20.0
+    },
+    {
+      "name": "El Pimpi",
+      "short_description": "Traditional Andalusian restaurant serving local specialties",
+      "approx_price_per_person": 25.0,
+      "tags": [
+        "food",
+        "landmark",
+        "local"
+      ],
+      "reason_for_user": "Savor traditional Andalusian cuisine in a historic setting, matching the user's interest in local food experiences",
+      "google_place_id": "ChIJ7a2TAMD3cg0RD8K-iOjCzIo",
+      "opening_hours": {
+        "open_now": true,
+        "periods": [
+          {
+            "close": {
+              "day": 1,
+              "time": "0100"
+            },
+            "open": {
+              "day": 0,
+              "time": "1200"
+            }
+          },
+          {
+            "close": {
+              "day": 2,
+              "time": "0100"
+            },
+            "open": {
+              "day": 1,
+              "time": "1200"
+            }
+          },
+          {
+            "close": {
+              "day": 3,
+              "time": "0100"
+            },
+            "open": {
+              "day": 2,
+              "time": "1200"
+            }
+          },
+          {
+            "close": {
+              "day": 4,
+              "time": "0100"
+            },
+            "open": {
+              "day": 3,
+              "time": "1200"
+            }
+          },
+          {
+            "close": {
+              "day": 5,
+              "time": "0100"
+            },
+            "open": {
+              "day": 4,
+              "time": "1200"
+            }
+          },
+          {
+            "close": {
+              "day": 6,
+              "time": "0100"
+            },
+            "open": {
+              "day": 5,
+              "time": "1200"
+            }
+          },
+          {
+            "close": {
+              "day": 0,
+              "time": "0100"
+            },
+            "open": {
+              "day": 6,
+              "time": "1200"
+            }
+          }
+        ],
+        "weekday_text": [
+          "Monday: 12:00 PM – 1:00 AM",
+          "Tuesday: 12:00 PM – 1:00 AM",
+          "Wednesday: 12:00 PM – 1:00 AM",
+          "Thursday: 12:00 PM – 1:00 AM",
+          "Friday: 12:00 PM – 1:00 AM",
+          "Saturday: 12:00 PM – 1:00 AM",
+          "Sunday: 12:00 PM – 1:00 AM"
+        ]
+      },
+      "google_price_level": 2,
+      "location": {
+        "lat": 36.72193040000001,
+        "lng": -4.4181336
+      },
+      "google_rating": 4.1,
+      "google_user_ratings_total": 18637,
+      "final_price_estimate": 25.0
+    },
+    {
+      "name": "La Parrilla de Antonio",
+      "short_description": "Traditional Sevillian grill serving local meat and seafood",
+      "approx_price_per_person": 25.0,
+      "tags": [
+        "food",
+        "landmark",
+        "local"
+      ],
+      "reason_for_user": "Savor traditional Sevillian cuisine in a cozy atmosphere, matching the user's interest in local food experiences",
+      "google_place_id": "ChIJJYk-MxFsEg0RQx6OlNz21EY",
+      "opening_hours": {
+        "open_now": false,
+        "periods": [
+          {
+            "close": {
+              "day": 1,
+              "time": "0000"
+            },
+            "open": {
+              "day": 0,
+              "time": "1300"
+            }
+          },
+          {
+            "close": {
+              "day": 3,
+              "time": "0000"
+            },
+            "open": {
+              "day": 2,
+              "time": "1300"
+            }
+          },
+          {
+            "close": {
+              "day": 4,
+              "time": "0000"
+            },
+            "open": {
+              "day": 3,
+              "time": "1300"
+            }
+          },
+          {
+            "close": {
+              "day": 5,
+              "time": "0000"
+            },
+            "open": {
+              "day": 4,
+              "time": "1300"
+            }
+          },
+          {
+            "close": {
+              "day": 6,
+              "time": "0000"
+            },
+            "open": {
+              "day": 5,
+              "time": "1300"
+            }
+          },
+          {
+            "close": {
+              "day": 0,
+              "time": "0000"
+            },
+            "open": {
+              "day": 6,
+              "time": "1300"
+            }
+          }
+        ],
+        "weekday_text": [
+          "Monday: Closed",
+          "Tuesday: 1:00 PM – 12:00 AM",
+          "Wednesday: 1:00 PM – 12:00 AM",
+          "Thursday: 1:00 PM – 12:00 AM",
+          "Friday: 1:00 PM – 12:00 AM",
+          "Saturday: 1:00 PM – 12:00 AM",
+          "Sunday: 1:00 PM – 12:00 AM"
+        ]
+      },
+      "google_price_level": 2,
+      "location": {
+        "lat": 37.3856835,
+        "lng": -5.9972751
+      },
+      "google_rating": 4.3,
+      "google_user_ratings_total": 4157,
+      "final_price_estimate": 25.0
+    },
+    {
+      "name": "La Azotea",
+      "short_description": "Gastronomic bar serving creative tapas and cocktails",
+      "approx_price_per_person": 30.0,
+      "tags": [
+        "landmark",
+        "food",
+        "cocktails",
+        "local"
+      ],
+      "reason_for_user": "Enjoy creative tapas and drinks in a trendy setting, matching the user's interest in exploring local food scenes",
+      "google_place_id": "ChIJjZIlWyRtEg0RY4ulEIJaduA",
+      "opening_hours": {
+        "open_now": false,
+        "periods": [
+          {
+            "close": {
+              "day": 0,
+              "time": "1600"
+            },
+            "open": {
+              "day": 0,
+              "time": "1330"
+            }
+          },
+          {
+            "close": {
+              "day": 1,
+              "time": "1600"
+            },
+            "open": {
+              "day": 1,
+              "time": "1330"
+            }
+          },
+          {
+            "close": {
+              "day": 2,
+              "time": "1600"
+            },
+            "open": {
+              "day": 2,
+              "time": "1330"
+            }
+          },
+          {
+            "close": {
+              "day": 3,
+              "time": "1600"
+            },
+            "open": {
+              "day": 3,
+              "time": "1330"
+            }
+          },
+          {
+            "close": {
+              "day": 4,
+              "time": "1600"
+            },
+            "open": {
+              "day": 4,
+              "time": "1330"
+            }
+          },
+          {
+            "close": {
+              "day": 5,
+              "time": "1600"
+            },
+            "open": {
+              "day": 5,
+              "time": "1330"
+            }
+          },
+          {
+            "close": {
+              "day": 5,
+              "time": "2300"
+            },
+            "open": {
+              "day": 5,
+              "time": "2000"
+            }
+          },
+          {
+            "close": {
+              "day": 6,
+              "time": "1600"
+            },
+            "open": {
+              "day": 6,
+              "time": "1330"
+            }
+          },
+          {
+            "close": {
+              "day": 6,
+              "time": "2300"
+            },
+            "open": {
+              "day": 6,
+              "time": "2000"
+            }
+          }
+        ],
+        "weekday_text": [
+          "Monday: 1:30 – 4:00 PM",
+          "Tuesday: 1:30 – 4:00 PM",
+          "Wednesday: 1:30 – 4:00 PM",
+          "Thursday: 1:30 – 4:00 PM",
+          "Friday: 1:30 – 4:00 PM, 8:00 – 11:00 PM",
+          "Saturday: 1:30 – 4:00 PM, 8:00 – 11:00 PM",
+          "Sunday: 1:30 – 4:00 PM"
+        ]
+      },
+      "google_price_level": null,
+      "location": {
+        "lat": 37.3966292,
+        "lng": -5.9953503
+      },
+      "google_rating": 5.0,
+      "google_user_ratings_total": 2,
+      "final_price_estimate": 30.0
+    },
+    {
+      "name": "Mercado de Triana",
+      "short_description": "Traditional market with local food and products",
+      "approx_price_per_person": 0.0,
+      "tags": [
+        "market",
+        "food",
+        "landmark",
+        "local"
+      ],
+      "reason_for_user": "Experience the vibrant atmosphere of a traditional market, perfect for city explorers interested in local food",
+      "google_place_id": "ChIJqdxAVhNsEg0RupAyfuheU_E",
+      "opening_hours": {
+        "open_now": true,
+        "periods": [
+          {
+            "close": {
+              "day": 1,
+              "time": "1500"
+            },
+            "open": {
+              "day": 1,
+              "time": "0900"
+            }
+          },
+          {
+            "close": {
+              "day": 2,
+              "time": "1500"
+            },
+            "open": {
+              "day": 2,
+              "time": "0900"
+            }
+          },
+          {
+            "close": {
+              "day": 3,
+              "time": "1500"
+            },
+            "open": {
+              "day": 3,
+              "time": "0900"
+            }
+          },
+          {
+            "close": {
+              "day": 4,
+              "time": "1500"
+            },
+            "open": {
+              "day": 4,
+              "time": "0900"
+            }
+          },
+          {
+            "close": {
+              "day": 5,
+              "time": "1500"
+            },
+            "open": {
+              "day": 5,
+              "time": "0900"
+            }
+          },
+          {
+            "close": {
+              "day": 6,
+              "time": "1500"
+            },
+            "open": {
+              "day": 6,
+              "time": "0900"
+            }
+          }
+        ],
+        "weekday_text": [
+          "Monday: 9:00 AM – 3:00 PM",
+          "Tuesday: 9:00 AM – 3:00 PM",
+          "Wednesday: 9:00 AM – 3:00 PM",
+          "Thursday: 9:00 AM – 3:00 PM",
+          "Friday: 9:00 AM – 3:00 PM",
+          "Saturday: 9:00 AM – 3:00 PM",
+          "Sunday: Closed"
+        ]
+      },
+      "google_price_level": null,
+      "location": {
+        "lat": 37.3857102,
+        "lng": -6.0036109
+      },
+      "google_rating": 4.4,
+      "google_user_ratings_total": 10526,
+      "final_price_estimate": 0.0
+    },
+    {
+      "name": "Calle Sierpes",
+      "short_description": "Bustling shopping street with local boutiques and restaurants",
+      "approx_price_per_person": 0.0,
+      "tags": [
+        "shopping",
+        "local"
+      ],
+      "reason_for_user": "Explore the city's vibrant shopping scene, perfect for those interested in discovering new local food spots",
+      "google_place_id": "ChIJebDdHBBsEg0RkEEL4lyXFOE",
+      "opening_hours": null,
+      "google_price_level": null,
+      "location": {
+        "lat": 37.3909294,
+        "lng": -5.9945118
+      },
+      "google_rating": 4.6,
+      "google_user_ratings_total": 717,
+      "final_price_estimate": 0.0
+    }
+  ],
+  "itinerary": {
+    "day1": {
+      "morning": [
+        {
+          "name": "La Brunilda",
+          "short_description": "Traditional Sevillian tavern serving tapas and wine",
+          "approx_price_per_person": 20.0,
+          "tags": [
+            "food",
+            "tavern",
+            "landmark",
+            "local"
+          ],
+          "reason_for_user": "Enjoy traditional Sevillian cuisine in a cozy atmosphere, matching the user's interest in local food experiences",
+          "google_place_id": "ChIJ0Y2ELBJsEg0RFdCaqrqPvpQ",
+          "opening_hours": {
+            "open_now": false,
+            "periods": [
+              {
+                "close": {
+                  "day": 0,
+                  "time": "1630"
+                },
+                "open": {
+                  "day": 0,
+                  "time": "1330"
+                }
+              },
+              {
+                "close": {
+                  "day": 0,
+                  "time": "2330"
+                },
+                "open": {
+                  "day": 0,
+                  "time": "2030"
+                }
+              },
+              {
+                "close": {
+                  "day": 1,
+                  "time": "1630"
+                },
+                "open": {
+                  "day": 1,
+                  "time": "1330"
+                }
+              },
+              {
+                "close": {
+                  "day": 1,
+                  "time": "2330"
+                },
+                "open": {
+                  "day": 1,
+                  "time": "2030"
+                }
+              },
+              {
+                "close": {
+                  "day": 2,
+                  "time": "1630"
+                },
+                "open": {
+                  "day": 2,
+                  "time": "1330"
+                }
+              },
+              {
+                "close": {
+                  "day": 2,
+                  "time": "2330"
+                },
+                "open": {
+                  "day": 2,
+                  "time": "2030"
+                }
+              },
+              {
+                "close": {
+                  "day": 3,
+                  "time": "1630"
+                },
+                "open": {
+                  "day": 3,
+                  "time": "1330"
+                }
+              },
+              {
+                "close": {
+                  "day": 3,
+                  "time": "2330"
+                },
+                "open": {
+                  "day": 3,
+                  "time": "2030"
+                }
+              },
+              {
+                "close": {
+                  "day": 4,
+                  "time": "1630"
+                },
+                "open": {
+                  "day": 4,
+                  "time": "1330"
+                }
+              },
+              {
+                "close": {
+                  "day": 4,
+                  "time": "2330"
+                },
+                "open": {
+                  "day": 4,
+                  "time": "2030"
+                }
+              },
+              {
+                "close": {
+                  "day": 5,
+                  "time": "1630"
+                },
+                "open": {
+                  "day": 5,
+                  "time": "1330"
+                }
+              },
+              {
+                "close": {
+                  "day": 5,
+                  "time": "2330"
+                },
+                "open": {
+                  "day": 5,
+                  "time": "2030"
+                }
+              },
+              {
+                "close": {
+                  "day": 6,
+                  "time": "1630"
+                },
+                "open": {
+                  "day": 6,
+                  "time": "1330"
+                }
+              },
+              {
+                "close": {
+                  "day": 6,
+                  "time": "2330"
+                },
+                "open": {
+                  "day": 6,
+                  "time": "2030"
+                }
+              }
+            ],
+            "weekday_text": [
+              "Monday: 1:30 – 4:30 PM, 8:30 – 11:30 PM",
+              "Tuesday: 1:30 – 4:30 PM, 8:30 – 11:30 PM",
+              "Wednesday: 1:30 – 4:30 PM, 8:30 – 11:30 PM",
+              "Thursday: 1:30 – 4:30 PM, 8:30 – 11:30 PM",
+              "Friday: 1:30 – 4:30 PM, 8:30 – 11:30 PM",
+              "Saturday: 1:30 – 4:30 PM, 8:30 – 11:30 PM",
+              "Sunday: 1:30 – 4:30 PM, 8:30 – 11:30 PM"
+            ]
+          },
+          "google_price_level": 2,
+          "location": {
+            "lat": 37.3883556,
+            "lng": -5.99945
+          },
+          "google_rating": 4.5,
+          "google_user_ratings_total": 4949,
+          "final_price_estimate": 20.0
+        }
+      ],
+      "afternoon": [
+        {
+          "name": "El Pimpi",
+          "short_description": "Traditional Andalusian restaurant serving local specialties",
+          "approx_price_per_person": 25.0,
+          "tags": [
+            "food",
+            "landmark",
+            "local"
+          ],
+          "reason_for_user": "Savor traditional Andalusian cuisine in a historic setting, matching the user's interest in local food experiences",
+          "google_place_id": "ChIJ7a2TAMD3cg0RD8K-iOjCzIo",
+          "opening_hours": {
+            "open_now": true,
+            "periods": [
+              {
+                "close": {
+                  "day": 1,
+                  "time": "0100"
+                },
+                "open": {
+                  "day": 0,
+                  "time": "1200"
+                }
+              },
+              {
+                "close": {
+                  "day": 2,
+                  "time": "0100"
+                },
+                "open": {
+                  "day": 1,
+                  "time": "1200"
+                }
+              },
+              {
+                "close": {
+                  "day": 3,
+                  "time": "0100"
+                },
+                "open": {
+                  "day": 2,
+                  "time": "1200"
+                }
+              },
+              {
+                "close": {
+                  "day": 4,
+                  "time": "0100"
+                },
+                "open": {
+                  "day": 3,
+                  "time": "1200"
+                }
+              },
+              {
+                "close": {
+                  "day": 5,
+                  "time": "0100"
+                },
+                "open": {
+                  "day": 4,
+                  "time": "1200"
+                }
+              },
+              {
+                "close": {
+                  "day": 6,
+                  "time": "0100"
+                },
+                "open": {
+                  "day": 5,
+                  "time": "1200"
+                }
+              },
+              {
+                "close": {
+                  "day": 0,
+                  "time": "0100"
+                },
+                "open": {
+                  "day": 6,
+                  "time": "1200"
+                }
+              }
+            ],
+            "weekday_text": [
+              "Monday: 12:00 PM – 1:00 AM",
+              "Tuesday: 12:00 PM – 1:00 AM",
+              "Wednesday: 12:00 PM – 1:00 AM",
+              "Thursday: 12:00 PM – 1:00 AM",
+              "Friday: 12:00 PM – 1:00 AM",
+              "Saturday: 12:00 PM – 1:00 AM",
+              "Sunday: 12:00 PM – 1:00 AM"
+            ]
+          },
+          "google_price_level": 2,
+          "location": {
+            "lat": 36.72193040000001,
+            "lng": -4.4181336
+          },
+          "google_rating": 4.1,
+          "google_user_ratings_total": 18637,
+          "final_price_estimate": 25.0
+        }
+      ],
+      "evening": [
+        {
+          "name": "La Parrilla de Antonio",
+          "short_description": "Traditional Sevillian grill serving local meat and seafood",
+          "approx_price_per_person": 25.0,
+          "tags": [
+            "food",
+            "landmark",
+            "local"
+          ],
+          "reason_for_user": "Savor traditional Sevillian cuisine in a cozy atmosphere, matching the user's interest in local food experiences",
+          "google_place_id": "ChIJJYk-MxFsEg0RQx6OlNz21EY",
+          "opening_hours": {
+            "open_now": false,
+            "periods": [
+              {
+                "close": {
+                  "day": 1,
+                  "time": "0000"
+                },
+                "open": {
+                  "day": 0,
+                  "time": "1300"
+                }
+              },
+              {
+                "close": {
+                  "day": 3,
+                  "time": "0000"
+                },
+                "open": {
+                  "day": 2,
+                  "time": "1300"
+                }
+              },
+              {
+                "close": {
+                  "day": 4,
+                  "time": "0000"
+                },
+                "open": {
+                  "day": 3,
+                  "time": "1300"
+                }
+              },
+              {
+                "close": {
+                  "day": 5,
+                  "time": "0000"
+                },
+                "open": {
+                  "day": 4,
+                  "time": "1300"
+                }
+              },
+              {
+                "close": {
+                  "day": 6,
+                  "time": "0000"
+                },
+                "open": {
+                  "day": 5,
+                  "time": "1300"
+                }
+              },
+              {
+                "close": {
+                  "day": 0,
+                  "time": "0000"
+                },
+                "open": {
+                  "day": 6,
+                  "time": "1300"
+                }
+              }
+            ],
+            "weekday_text": [
+              "Monday: Closed",
+              "Tuesday: 1:00 PM – 12:00 AM",
+              "Wednesday: 1:00 PM – 12:00 AM",
+              "Thursday: 1:00 PM – 12:00 AM",
+              "Friday: 1:00 PM – 12:00 AM",
+              "Saturday: 1:00 PM – 12:00 AM",
+              "Sunday: 1:00 PM – 12:00 AM"
+            ]
+          },
+          "google_price_level": 2,
+          "location": {
+            "lat": 37.3856835,
+            "lng": -5.9972751
+          },
+          "google_rating": 4.3,
+          "google_user_ratings_total": 4157,
+          "final_price_estimate": 25.0
+        }
+      ]
+    },
+    "day2": {
+      "morning": [
+        {
+          "name": "La Azotea",
+          "short_description": "Gastronomic bar serving creative tapas and cocktails",
+          "approx_price_per_person": 30.0,
+          "tags": [
+            "landmark",
+            "food",
+            "cocktails",
+            "local"
+          ],
+          "reason_for_user": "Enjoy creative tapas and drinks in a trendy setting, matching the user's interest in exploring local food scenes",
+          "google_place_id": "ChIJjZIlWyRtEg0RY4ulEIJaduA",
+          "opening_hours": {
+            "open_now": false,
+            "periods": [
+              {
+                "close": {
+                  "day": 0,
+                  "time": "1600"
+                },
+                "open": {
+                  "day": 0,
+                  "time": "1330"
+                }
+              },
+              {
+                "close": {
+                  "day": 1,
+                  "time": "1600"
+                },
+                "open": {
+                  "day": 1,
+                  "time": "1330"
+                }
+              },
+              {
+                "close": {
+                  "day": 2,
+                  "time": "1600"
+                },
+                "open": {
+                  "day": 2,
+                  "time": "1330"
+                }
+              },
+              {
+                "close": {
+                  "day": 3,
+                  "time": "1600"
+                },
+                "open": {
+                  "day": 3,
+                  "time": "1330"
+                }
+              },
+              {
+                "close": {
+                  "day": 4,
+                  "time": "1600"
+                },
+                "open": {
+                  "day": 4,
+                  "time": "1330"
+                }
+              },
+              {
+                "close": {
+                  "day": 5,
+                  "time": "1600"
+                },
+                "open": {
+                  "day": 5,
+                  "time": "1330"
+                }
+              },
+              {
+                "close": {
+                  "day": 5,
+                  "time": "2300"
+                },
+                "open": {
+                  "day": 5,
+                  "time": "2000"
+                }
+              },
+              {
+                "close": {
+                  "day": 6,
+                  "time": "1600"
+                },
+                "open": {
+                  "day": 6,
+                  "time": "1330"
+                }
+              },
+              {
+                "close": {
+                  "day": 6,
+                  "time": "2300"
+                },
+                "open": {
+                  "day": 6,
+                  "time": "2000"
+                }
+              }
+            ],
+            "weekday_text": [
+              "Monday: 1:30 – 4:00 PM",
+              "Tuesday: 1:30 – 4:00 PM",
+              "Wednesday: 1:30 – 4:00 PM",
+              "Thursday: 1:30 – 4:00 PM",
+              "Friday: 1:30 – 4:00 PM, 8:00 – 11:00 PM",
+              "Saturday: 1:30 – 4:00 PM, 8:00 – 11:00 PM",
+              "Sunday: 1:30 – 4:00 PM"
+            ]
+          },
+          "google_price_level": null,
+          "location": {
+            "lat": 37.3966292,
+            "lng": -5.9953503
+          },
+          "google_rating": 5.0,
+          "google_user_ratings_total": 2,
+          "final_price_estimate": 30.0
+        }
+      ],
+      "afternoon": [
+        {
+          "name": "Mercado de Triana",
+          "short_description": "Traditional market with local food and products",
+          "approx_price_per_person": 0.0,
+          "tags": [
+            "market",
+            "food",
+            "landmark",
+            "local"
+          ],
+          "reason_for_user": "Experience the vibrant atmosphere of a traditional market, perfect for city explorers interested in local food",
+          "google_place_id": "ChIJqdxAVhNsEg0RupAyfuheU_E",
+          "opening_hours": {
+            "open_now": true,
+            "periods": [
+              {
+                "close": {
+                  "day": 1,
+                  "time": "1500"
+                },
+                "open": {
+                  "day": 1,
+                  "time": "0900"
+                }
+              },
+              {
+                "close": {
+                  "day": 2,
+                  "time": "1500"
+                },
+                "open": {
+                  "day": 2,
+                  "time": "0900"
+                }
+              },
+              {
+                "close": {
+                  "day": 3,
+                  "time": "1500"
+                },
+                "open": {
+                  "day": 3,
+                  "time": "0900"
+                }
+              },
+              {
+                "close": {
+                  "day": 4,
+                  "time": "1500"
+                },
+                "open": {
+                  "day": 4,
+                  "time": "0900"
+                }
+              },
+              {
+                "close": {
+                  "day": 5,
+                  "time": "1500"
+                },
+                "open": {
+                  "day": 5,
+                  "time": "0900"
+                }
+              },
+              {
+                "close": {
+                  "day": 6,
+                  "time": "1500"
+                },
+                "open": {
+                  "day": 6,
+                  "time": "0900"
+                }
+              }
+            ],
+            "weekday_text": [
+              "Monday: 9:00 AM – 3:00 PM",
+              "Tuesday: 9:00 AM – 3:00 PM",
+              "Wednesday: 9:00 AM – 3:00 PM",
+              "Thursday: 9:00 AM – 3:00 PM",
+              "Friday: 9:00 AM – 3:00 PM",
+              "Saturday: 9:00 AM – 3:00 PM",
+              "Sunday: Closed"
+            ]
+          },
+          "google_price_level": null,
+          "location": {
+            "lat": 37.3857102,
+            "lng": -6.0036109
+          },
+          "google_rating": 4.4,
+          "google_user_ratings_total": 10526,
+          "final_price_estimate": 0.0
+        }
+      ],
+      "evening": [
+        {
+          "name": "Calle Sierpes",
+          "short_description": "Bustling shopping street with local boutiques and restaurants",
+          "approx_price_per_person": 0.0,
+          "tags": [
+            "shopping",
+            "local"
+          ],
+          "reason_for_user": "Explore the city's vibrant shopping scene, perfect for those interested in discovering new local food spots",
+          "google_place_id": "ChIJebDdHBBsEg0RkEEL4lyXFOE",
+          "opening_hours": null,
+          "google_price_level": null,
+          "location": {
+            "lat": 37.3909294,
+            "lng": -5.9945118
+          },
+          "google_rating": 4.6,
+          "google_user_ratings_total": 717,
+          "final_price_estimate": 0.0
+        }
+      ]
+    },
+    "day3": {
+      "morning": [],
+      "afternoon": [],
+      "evening": []
+    }
+  },
+  "evaluation": {
+    "scores": {
+      "interest_match": 3,
+      "budget_realism": 3,
+      "logistics": 3,
+      "suitability_for_constraints": 3,
+      "comment": "Evaluation could not be completed. Using default scores."
+    },
+    "overall": 3.0
+  }
+}

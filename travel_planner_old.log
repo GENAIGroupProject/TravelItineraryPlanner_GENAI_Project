@@ -1,0 +1,119 @@
+2025-12-12 15:14:04,116 - TravelPlanner - INFO - logging_utils.py:66 - [MAIN PIPELINE] Starting travel planning
+2025-12-12 15:15:14,578 - TravelPlanner - INFO - logging_utils.py:66 - [TIMER] Starting Interest Refinement
+2025-12-12 15:15:14,579 - TravelPlanner - INFO - logging_utils.py:66 - [INTEREST REFINEMENT] Starting dialogue
+2025-12-12 15:15:48,583 - TravelPlanner - INFO - logging_utils.py:66 - [DIALOGUE] Turn 1/5
+2025-12-12 15:17:04,951 - TravelPlanner - INFO - logging_utils.py:66 - [DIALOGUE] Turn 2/5
+2025-12-12 15:17:51,053 - TravelPlanner - INFO - logging_utils.py:66 - [DIALOGUE] Turn 3/5
+2025-12-12 15:18:29,245 - TravelPlanner - INFO - logging_utils.py:66 - [DIALOGUE] Turn 4/5
+2025-12-12 15:19:02,940 - TravelPlanner - INFO - logging_utils.py:66 - [DIALOGUE] Turn 5/5
+2025-12-12 15:19:47,506 - TravelPlanner - INFO - logging_utils.py:66 - [INTEREST REFINEMENT] Max turns (5) reached
+2025-12-12 15:19:47,520 - TravelPlanner - INFO - logging_utils.py:66 - [TIMER] Completed Interest Refinement in 272.94 seconds
+2025-12-12 15:19:47,521 - TravelPlanner - INFO - logging_utils.py:66 - [LOCATION SCOUT] Generating attractions for Rome
+2025-12-12 15:19:47,521 - TravelPlanner - INFO - logging_utils.py:66 - [TIMER] Starting Location Scout
+2025-12-12 15:22:42,273 - TravelPlanner - INFO - logging_utils.py:66 - [TIMER] Completed Location Scout in 174.75 seconds
+2025-12-12 15:22:42,274 - TravelPlanner - INFO - logging_utils.py:66 - [GOOGLE PLACES] API not enabled, skipping enrichment
+2025-12-12 15:22:42,274 - TravelPlanner - INFO - logging_utils.py:66 - [BUDGET AGENT] Filtering attractions for 1 people, 500.0 EUR
+2025-12-12 15:22:42,274 - TravelPlanner - INFO - logging_utils.py:66 - [TIMER] Starting Budget Filtering
+2025-12-12 15:22:42,280 - TravelPlanner - INFO - logging_utils.py:66 - [TIMER] Completed Budget Filtering in 0.01 seconds
+2025-12-12 15:22:42,280 - TravelPlanner - INFO - logging_utils.py:66 - [SCHEDULER] Creating 3-day itinerary
+2025-12-12 15:22:42,280 - TravelPlanner - INFO - logging_utils.py:66 - [TIMER] Starting Scheduling
+2025-12-12 15:22:42,287 - TravelPlanner - INFO - logging_utils.py:66 - [TIMER] Completed Scheduling in 0.01 seconds
+2025-12-12 15:22:42,287 - TravelPlanner - INFO - logging_utils.py:66 - [EVALUATION] Evaluating itinerary quality
+2025-12-12 15:22:42,287 - TravelPlanner - INFO - logging_utils.py:66 - [TIMER] Starting Evaluation
+2025-12-12 15:25:58,998 - TravelPlanner - INFO - logging_utils.py:66 - [TIMER] Completed Evaluation in 196.71 seconds
+2025-12-12 15:28:46,833 - TravelPlanner - INFO - logging_utils.py:66 - [MAIN PIPELINE] Starting travel planning
+2025-12-12 15:29:03,038 - TravelPlanner - INFO - logging_utils.py:66 - [INTEREST REFINEMENT] Starting dialogue
+2025-12-12 15:29:03,039 - TravelPlanner - INFO - logging_utils.py:66 - [INTEREST REFINEMENT] Starting dialogue
+2025-12-12 15:29:14,449 - TravelPlanner - INFO - logging_utils.py:66 - [DIALOGUE] Turn 1/5
+2025-12-12 15:31:19,379 - TravelPlanner - INFO - logging_utils.py:66 - [DIALOGUE] Turn 2/5
+2025-12-12 15:32:40,313 - TravelPlanner - INFO - logging_utils.py:66 - [DIALOGUE] Turn 3/5
+2025-12-12 15:33:54,017 - TravelPlanner - INFO - logging_utils.py:66 - [DIALOGUE] Turn 4/5
+2025-12-12 15:35:05,898 - TravelPlanner - INFO - logging_utils.py:66 - [DIALOGUE] Turn 5/5
+2025-12-12 15:36:32,548 - TravelPlanner - INFO - logging_utils.py:66 - [INTEREST REFINEMENT] Max turns (5) reached
+2025-12-12 15:36:32,549 - TravelPlanner - INFO - logging_utils.py:66 - [LOCATION SCOUT] Generating attractions for Rome
+2025-12-12 15:40:46,901 - TravelPlanner - INFO - logging_utils.py:66 - [GOOGLE PLACES] API not enabled, skipping enrichment
+2025-12-12 15:40:46,901 - TravelPlanner - INFO - logging_utils.py:66 - [BUDGET AGENT] Filtering attractions for 1 people, 500.0 EUR
+2025-12-12 15:40:46,901 - TravelPlanner - INFO - logging_utils.py:66 - [SCHEDULER] Creating 3-day itinerary
+2025-12-12 15:40:46,901 - TravelPlanner - INFO - logging_utils.py:66 - [EVALUATION] Evaluating itinerary quality
+2025-12-12 15:42:50,398 - TravelPlanner - INFO - logging_utils.py:66 - [MAIN PIPELINE] Planning completed successfully
+2025-12-12 15:44:59,813 - TravelPlanner - INFO - logging_utils.py:66 - [MAIN PIPELINE] Starting travel planning
+2025-12-12 15:45:20,665 - TravelPlanner - INFO - logging_utils.py:66 - [INTEREST REFINEMENT] Starting dialogue
+2025-12-12 15:45:20,665 - TravelPlanner - INFO - logging_utils.py:66 - [INTEREST REFINEMENT] Starting dialogue
+2025-12-12 15:45:32,002 - TravelPlanner - INFO - logging_utils.py:66 - [DIALOGUE] Turn 1/5
+2025-12-12 15:46:20,557 - TravelPlanner - INFO - logging_utils.py:66 - [DIALOGUE] Turn 2/5
+2025-12-12 15:47:11,688 - TravelPlanner - INFO - logging_utils.py:66 - [DIALOGUE] Turn 3/5
+2025-12-12 15:48:04,065 - TravelPlanner - INFO - logging_utils.py:66 - [DIALOGUE] Turn 4/5
+2025-12-12 15:48:52,682 - TravelPlanner - INFO - logging_utils.py:66 - [DIALOGUE] Turn 5/5
+2025-12-12 15:49:52,665 - TravelPlanner - INFO - logging_utils.py:66 - [INTEREST REFINEMENT] Max turns (5) reached
+2025-12-12 15:49:52,665 - TravelPlanner - INFO - logging_utils.py:66 - [LOCATION SCOUT] Generating attractions for Rome
+2025-12-12 15:59:31,574 - TravelPlanner - INFO - logging_utils.py:66 - [MAIN PIPELINE] Starting travel planning
+2025-12-12 15:59:38,617 - TravelPlanner - INFO - logging_utils.py:66 - [INTEREST REFINEMENT] Starting dialogue
+2025-12-12 15:59:38,618 - TravelPlanner - INFO - logging_utils.py:66 - [INTEREST REFINEMENT] Starting dialogue
+2025-12-12 16:00:03,804 - TravelPlanner - INFO - logging_utils.py:66 - [DIALOGUE] Turn 1/5
+2025-12-12 16:01:06,407 - TravelPlanner - INFO - logging_utils.py:66 - [DIALOGUE] Turn 2/5
+2025-12-12 16:02:05,054 - TravelPlanner - INFO - logging_utils.py:66 - [DIALOGUE] Turn 3/5
+2025-12-12 16:03:00,316 - TravelPlanner - INFO - logging_utils.py:66 - [DIALOGUE] Turn 4/5
+2025-12-12 16:03:49,144 - TravelPlanner - INFO - logging_utils.py:66 - [DIALOGUE] Turn 5/5
+2025-12-12 16:04:30,285 - TravelPlanner - INFO - logging_utils.py:66 - [INTEREST REFINEMENT] Max turns (5) reached
+2025-12-12 16:04:30,285 - TravelPlanner - INFO - logging_utils.py:66 - [LOCATION SCOUT] Generating attractions for Rome
+2025-12-12 16:07:33,849 - TravelPlanner - INFO - logging_utils.py:66 - [MAIN PIPELINE] Starting travel planning
+2025-12-12 16:07:45,189 - TravelPlanner - INFO - logging_utils.py:66 - [INTEREST REFINEMENT] Starting dialogue
+2025-12-12 16:07:45,189 - TravelPlanner - INFO - logging_utils.py:66 - [INTEREST REFINEMENT] Starting dialogue
+2025-12-12 16:07:49,822 - TravelPlanner - INFO - logging_utils.py:66 - [DIALOGUE] Turn 1/5
+2025-12-12 16:08:41,884 - TravelPlanner - INFO - logging_utils.py:66 - [DIALOGUE] Turn 2/5
+2025-12-12 16:10:08,871 - TravelPlanner - INFO - logging_utils.py:66 - [DIALOGUE] Turn 3/5
+2025-12-12 16:11:20,402 - TravelPlanner - INFO - logging_utils.py:66 - [INTEREST REFINEMENT] Profile finalized successfully
+2025-12-12 16:11:20,402 - TravelPlanner - INFO - logging_utils.py:66 - [LOCATION SCOUT] Generating attractions for Annecy
+2025-12-12 16:14:49,062 - TravelPlanner - INFO - logging_utils.py:66 - [GOOGLE PLACES] API not enabled, skipping enrichment
+2025-12-12 16:14:49,062 - TravelPlanner - INFO - logging_utils.py:66 - [BUDGET AGENT] Filtering attractions for 2 people, 200.0 EUR
+2025-12-12 16:14:49,062 - TravelPlanner - INFO - logging_utils.py:66 - [SCHEDULER] Creating 2-day itinerary
+2025-12-12 16:14:49,062 - TravelPlanner - INFO - logging_utils.py:66 - [EVALUATION] Evaluating itinerary quality
+2025-12-12 16:15:40,834 - TravelPlanner - INFO - logging_utils.py:66 - [MAIN PIPELINE] Planning completed successfully
+2025-12-13 09:32:15,895 - TravelPlanner - INFO - logging_utils.py:66 - [MAIN PIPELINE] Starting travel planning
+2025-12-13 09:32:28,605 - TravelPlanner - INFO - logging_utils.py:66 - [INTEREST REFINEMENT] Starting dialogue
+2025-12-13 09:32:28,605 - TravelPlanner - INFO - logging_utils.py:66 - [INTEREST REFINEMENT] Starting dialogue
+2025-12-13 09:32:44,594 - TravelPlanner - INFO - logging_utils.py:66 - [DIALOGUE] Turn 1/5
+2025-12-13 09:34:27,666 - TravelPlanner - INFO - logging_utils.py:66 - [DIALOGUE] Turn 2/5
+2025-12-13 09:35:40,748 - TravelPlanner - INFO - logging_utils.py:66 - [DIALOGUE] Turn 3/5
+2025-12-13 09:37:01,991 - TravelPlanner - INFO - logging_utils.py:66 - [DIALOGUE] Turn 4/5
+2025-12-13 09:37:37,891 - TravelPlanner - INFO - logging_utils.py:66 - [DIALOGUE] Turn 5/5
+2025-12-13 09:38:39,429 - TravelPlanner - INFO - logging_utils.py:66 - [INTEREST REFINEMENT] Max turns (5) reached
+2025-12-13 09:38:53,858 - TravelPlanner - INFO - logging_utils.py:66 - [LOCATION SCOUT] Generating attractions for Reims
+2025-12-13 09:44:08,531 - TravelPlanner - INFO - logging_utils.py:66 - [GOOGLE PLACES] Enriching 10 attractions
+2025-12-13 09:44:14,656 - TravelPlanner - INFO - logging_utils.py:66 - [BUDGET AGENT] Filtering attractions for 1 people, 200.0 EUR
+2025-12-13 09:44:14,657 - TravelPlanner - INFO - logging_utils.py:66 - [SCHEDULER] Creating 2-day itinerary
+2025-12-13 09:44:14,657 - TravelPlanner - INFO - logging_utils.py:66 - [EVALUATION] Evaluating itinerary quality
+2025-12-13 09:51:39,267 - TravelPlanner - INFO - logging_utils.py:66 - [MAIN PIPELINE] Planning completed successfully
+2025-12-14 18:03:43,974 - TravelPlanner - INFO - logging_utils.py:66 - [MAIN PIPELINE] Starting travel planning
+2025-12-14 18:03:59,601 - TravelPlanner - INFO - logging_utils.py:66 - [INTEREST REFINEMENT] Starting dialogue
+2025-12-14 18:03:59,601 - TravelPlanner - INFO - logging_utils.py:66 - [INTEREST REFINEMENT] Starting dialogue
+2025-12-14 18:04:13,215 - TravelPlanner - INFO - logging_utils.py:66 - [DIALOGUE] Turn 1/3
+2025-12-14 18:04:53,176 - TravelPlanner - INFO - logging_utils.py:66 - [DIALOGUE] Turn 2/3
+2025-12-14 18:05:20,656 - TravelPlanner - INFO - logging_utils.py:66 - [DIALOGUE] Turn 3/3
+2025-12-14 18:05:47,021 - TravelPlanner - INFO - logging_utils.py:66 - [INTEREST REFINEMENT] Max turns (3) reached
+2025-12-14 18:06:55,184 - TravelPlanner - INFO - logging_utils.py:66 - [MAIN PIPELINE] Starting travel planning
+2025-12-14 18:07:07,357 - TravelPlanner - INFO - logging_utils.py:66 - [INTEREST REFINEMENT] Starting dialogue
+2025-12-14 18:07:07,357 - TravelPlanner - INFO - logging_utils.py:66 - [INTEREST REFINEMENT] Starting dialogue
+2025-12-14 18:07:15,719 - TravelPlanner - INFO - logging_utils.py:66 - [DIALOGUE] Turn 1/3
+2025-12-14 18:08:02,568 - TravelPlanner - INFO - logging_utils.py:66 - [DIALOGUE] Turn 2/3
+2025-12-14 18:08:31,330 - TravelPlanner - INFO - logging_utils.py:66 - [DIALOGUE] Turn 3/3
+2025-12-14 18:08:36,813 - TravelPlanner - INFO - logging_utils.py:66 - [INTEREST REFINEMENT] Max turns (3) reached
+2025-12-14 18:08:43,084 - TravelPlanner - INFO - logging_utils.py:66 - [LOCATION SCOUT] Generating attractions for Zürich
+2025-12-14 18:09:13,126 - TravelPlanner - INFO - logging_utils.py:66 - [GOOGLE PLACES] Enriching 1 attractions
+2025-12-14 18:09:13,880 - TravelPlanner - INFO - logging_utils.py:66 - [BUDGET AGENT] Filtering attractions for 1 people, 300.0 EUR
+2025-12-14 18:09:13,880 - TravelPlanner - INFO - logging_utils.py:66 - [SCHEDULER] Creating 2-day itinerary
+2025-12-14 18:09:13,881 - TravelPlanner - INFO - logging_utils.py:66 - [EVALUATION] Evaluating itinerary quality
+2025-12-14 18:09:43,920 - TravelPlanner - INFO - logging_utils.py:66 - [MAIN PIPELINE] Planning completed successfully
+2025-12-14 18:11:19,145 - TravelPlanner - INFO - logging_utils.py:66 - [MAIN PIPELINE] Starting travel planning
+2025-12-14 18:11:26,694 - TravelPlanner - INFO - logging_utils.py:66 - [INTEREST REFINEMENT] Starting dialogue
+2025-12-14 18:11:26,695 - TravelPlanner - INFO - logging_utils.py:66 - [INTEREST REFINEMENT] Starting dialogue
+2025-12-14 18:11:46,249 - TravelPlanner - INFO - logging_utils.py:66 - [DIALOGUE] Turn 1/3
+2025-12-14 18:12:40,843 - TravelPlanner - INFO - logging_utils.py:66 - [DIALOGUE] Turn 2/3
+2025-12-14 18:13:09,400 - TravelPlanner - INFO - logging_utils.py:66 - [DIALOGUE] Turn 3/3
+2025-12-14 18:13:40,200 - TravelPlanner - INFO - logging_utils.py:66 - [INTEREST REFINEMENT] Max turns (3) reached
+2025-12-14 18:13:46,408 - TravelPlanner - INFO - logging_utils.py:66 - [LOCATION SCOUT] Generating attractions for Versailles
+2025-12-14 18:14:16,440 - TravelPlanner - INFO - logging_utils.py:66 - [GOOGLE PLACES] Enriching 1 attractions
+2025-12-14 18:14:17,306 - TravelPlanner - INFO - logging_utils.py:66 - [BUDGET AGENT] Filtering attractions for 1 people, 600.0 EUR
+2025-12-14 18:14:17,307 - TravelPlanner - INFO - logging_utils.py:66 - [SCHEDULER] Creating 2-day itinerary
+2025-12-14 18:14:17,307 - TravelPlanner - INFO - logging_utils.py:66 - [EVALUATION] Evaluating itinerary quality
+2025-12-14 18:14:47,341 - TravelPlanner - INFO - logging_utils.py:66 - [MAIN PIPELINE] Planning completed successfully

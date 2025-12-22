@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import os
 from datetime import datetime
 from typing import Any, Dict, List, Optional, Tuple
 
@@ -8,6 +9,16 @@ import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 import streamlit as st
+
+import requests
+from functools import lru_cache
+
+# ✅ Use your existing config if available
+try:
+    from config import Config  # type: ignore
+except Exception:
+    Config = None  # type: ignore
+
 
 def to_plain(obj: Any) -> Any:
     """Convert pydantic-ish objects into plain python types for UI."""
@@ -21,6 +32,51 @@ def to_plain(obj: Any) -> Any:
         return {k: to_plain(v) for k, v in obj.items()}
     return obj
 
+
+def getv(obj: Any, key: str, default: Any = None) -> Any:
+    """Safely read obj[key] for dict OR pydantic/dataclass objects."""
+    if obj is None:
+        return default
+    if isinstance(obj, dict):
+        return obj.get(key, default)
+    if hasattr(obj, key):
+        val = getattr(obj, key, default)
+        return val if val is not None else default
+    try:
+        plain = to_plain(obj)
+        if isinstance(plain, dict):
+            return plain.get(key, default)
+    except Exception:
+        pass
+    return default
+
+
+# ✅ NEW: safe API key retrieval without touching st.secrets when it doesn't exist
+def get_google_api_key() -> str:
+    """
+    Never crashes even if .streamlit/secrets.toml is missing.
+    Priority:
+      1) Config.GOOGLE_API_KEY
+      2) env GOOGLE_API_KEY
+      3) st.secrets['GOOGLE_API_KEY'] if secrets exist
+    """
+    # 1) Config
+    if Config is not None and getattr(Config, "GOOGLE_API_KEY", None):
+        return str(getattr(Config, "GOOGLE_API_KEY")).strip()
+
+    # 2) env
+    env_key = os.getenv("GOOGLE_API_KEY")
+    if env_key:
+        return env_key.strip()
+
+    # 3) st.secrets (guarded!)
+    try:
+        # accessing st.secrets can raise if no secrets.toml
+        return str(st.secrets.get("GOOGLE_API_KEY", "")).strip()
+    except Exception:
+        return ""
+
+
 def get_all_tags(attractions: List[Dict[str, Any]]) -> List[str]:
     tags = set()
     for attr in attractions or []:
@@ -28,6 +84,7 @@ def get_all_tags(attractions: List[Dict[str, Any]]) -> List[str]:
             if t:
                 tags.add(str(t))
     return sorted(tags)
+
 
 def display_agent_logs(max_items: int = 5) -> None:
     if not st.session_state.get("agent_logs"):
@@ -48,23 +105,109 @@ def display_agent_logs(max_items: int = 5) -> None:
             unsafe_allow_html=True,
         )
 
+
+@lru_cache(maxsize=512)
+def get_google_place_photo_url(query: str, api_key: str, maxwidth: int = 800) -> Optional[str]:
+    """
+    Proper Google Places photo flow:
+      1) findplacefromtext -> place_id
+      2) details -> photos[0].photo_reference
+      3) photo -> URL using photoreference=
+    """
+    if not api_key or not query:
+        return None
+
+    try:
+        # 1) Find place_id
+        find_url = "https://maps.googleapis.com/maps/api/place/findplacefromtext/json"
+        find_params = {
+            "input": query,
+            "inputtype": "textquery",
+            "fields": "place_id",
+            "key": api_key,
+        }
+        r = requests.get(find_url, params=find_params, timeout=10)
+        r.raise_for_status()
+        data = r.json()
+
+        candidates = data.get("candidates") or []
+        if not candidates:
+            return None
+
+        place_id = candidates[0].get("place_id")
+        if not place_id:
+            return None
+
+        # 2) Details -> photos
+        details_url = "https://maps.googleapis.com/maps/api/place/details/json"
+        details_params = {"place_id": place_id, "fields": "photos", "key": api_key}
+        r2 = requests.get(details_url, params=details_params, timeout=10)
+        r2.raise_for_status()
+        details = r2.json().get("result", {})
+        photos = details.get("photos") or []
+        if not photos:
+            return None
+
+        photo_ref = photos[0].get("photo_reference")
+        if not photo_ref:
+            return None
+
+        # 3) Photo URL (IMPORTANT: photoreference=)
+        return (
+            "https://maps.googleapis.com/maps/api/place/photo"
+            f"?maxwidth={maxwidth}&photoreference={photo_ref}&key={api_key}"
+        )
+
+    except Exception:
+        return None
+
+
 def display_attraction_card(attr: Dict[str, Any], compact: bool = False) -> None:
     name = attr.get("name", "Unknown")
     description = attr.get("short_description", "")
-    price = float(attr.get("final_price_estimate", 0) or 0)
+
+    # Support either enriched pricing or LLM pricing
+    price = float(attr.get("final_price_estimate", attr.get("approx_price_per_person", 0)) or 0)
+
     rating = attr.get("google_rating")
     opening_hours = attr.get("opening_hours")
     tags = attr.get("tags", []) or []
 
+    # profile may be TravelProfile object
+    profile_obj = st.session_state.get("profile")
+    chosen_city = (getv(profile_obj, "chosen_city", "") or "").strip()
+    city = (attr.get("city") or chosen_city or "").strip()
+
+    api_key = get_google_api_key()
+
+    photo_url = None
+    if api_key:
+        # Prefer enriched photo reference if present (already a photo_reference)
+        if attr.get("google_photo_reference"):
+            photo_url = (
+                "https://maps.googleapis.com/maps/api/place/photo"
+                f"?maxwidth=800&photoreference={attr['google_photo_reference']}&key={api_key}"
+            )
+        else:
+            photo_url = get_google_place_photo_url(f"{name} {city}".strip(), api_key, maxwidth=800)
+
     if compact:
-        st.markdown(f"**{name}** - €{price:.2f}")
-        if isinstance(rating, (int, float)):
-            stars = "★" * int(rating) + "☆" * (5 - int(rating))
-            st.markdown(f"<span class='rating-stars'>{stars} ({rating}/5)</span>", unsafe_allow_html=True)
+        col_text, col_img = st.columns([3, 1])
+        with col_text:
+            st.markdown(f"**{name}** - €{price:.2f}")
+            if isinstance(rating, (int, float)):
+                stars = "★" * int(rating) + "☆" * (5 - int(rating))
+                st.markdown(f"<span class='rating-stars'>{stars} ({rating}/5)</span>", unsafe_allow_html=True)
+        with col_img:
+            if photo_url:
+                st.image(photo_url, use_container_width=True)
         return
 
     with st.container():
         st.markdown('<div class="attraction-card">', unsafe_allow_html=True)
+
+        if photo_url:
+            st.image(photo_url, use_container_width=True)
 
         col1, col2 = st.columns([3, 1])
         with col1:
@@ -99,6 +242,7 @@ def display_attraction_card(attr: Dict[str, Any], compact: bool = False) -> None
 
         st.markdown("</div>", unsafe_allow_html=True)
 
+
 def display_daily_schedule(itinerary: Dict[str, Any], attractions: List[Dict[str, Any]]) -> None:
     if not itinerary:
         st.info("No itinerary available.")
@@ -114,10 +258,7 @@ def display_daily_schedule(itinerary: Dict[str, Any], attractions: List[Dict[str
         def daynum(k: str) -> int:
             return int("".join(c for c in k if c.isdigit()) or 999)
 
-        keys = sorted(
-            [k for k in itinerary if str(k).lower().startswith("day")],
-            key=daynum
-        )
+        keys = sorted([k for k in itinerary if str(k).lower().startswith("day")], key=daynum)
         day_items = [(k, itinerary.get(k) or {}) for k in keys]
 
     for day_key, day in day_items:
@@ -141,9 +282,7 @@ def display_daily_schedule(itinerary: Dict[str, Any], attractions: List[Dict[str
 
                 attr = find_attr(name)
 
-                # Two-column layout: text | image
                 col_text, col_img = st.columns([3, 1])
-
                 with col_text:
                     if attr:
                         display_attraction_card(attr, compact=True)
@@ -151,14 +290,28 @@ def display_daily_schedule(itinerary: Dict[str, Any], attractions: List[Dict[str
                         st.write(f"• {name}")
 
                 with col_img:
-                    if attr and attr.get("google_photo_reference"):
+                    if not attr:
+                        continue
+                    api_key = get_google_api_key()
+                    if not api_key:
+                        continue
+
+                    profile_obj = st.session_state.get("profile")
+                    chosen_city = (getv(profile_obj, "chosen_city", "") or "").strip()
+                    city = (attr.get("city") or chosen_city or "").strip()
+
+                    photo_url = None
+                    if attr.get("google_photo_reference"):
                         photo_url = (
                             "https://maps.googleapis.com/maps/api/place/photo"
-                            f"?maxwidth=400"
-                            f"&photo_reference={attr['google_photo_reference']}"
-                            f"&key={st.secrets.get('GOOGLE_API_KEY', '')}"
+                            f"?maxwidth=400&photoreference={attr['google_photo_reference']}&key={api_key}"
                         )
+                    else:
+                        photo_url = get_google_place_photo_url(f"{attr.get('name','')} {city}".strip(), api_key, maxwidth=400)
+
+                    if photo_url:
                         st.image(photo_url, use_container_width=True)
+
 
 def _display_one_day(day_key: str, day_data: Dict[str, Any], attractions: List[Dict[str, Any]]) -> None:
     if not day_data:
@@ -179,6 +332,7 @@ def _display_one_day(day_key: str, day_data: Dict[str, Any], attractions: List[D
 
     st.markdown("</div>", unsafe_allow_html=True)
 
+
 def display_attractions(attractions: List[Dict[str, Any]]) -> None:
     st.markdown(f"### 🏞️ {len(attractions)} Attractions")
 
@@ -190,13 +344,10 @@ def display_attractions(attractions: List[Dict[str, Any]]) -> None:
 
     filtered = attractions
     if tag_filter:
-        filtered = [
-            a for a in attractions
-            if any(t in (a.get("tags", []) or []) for t in tag_filter)
-        ]
+        filtered = [a for a in attractions if any(t in (a.get("tags", []) or []) for t in tag_filter)]
 
     if sort_by == "Price":
-        filtered.sort(key=lambda x: float(x.get("final_price_estimate", 0) or 0))
+        filtered.sort(key=lambda x: float(x.get("final_price_estimate", x.get("approx_price_per_person", 0)) or 0))
     elif sort_by == "Rating":
         filtered.sort(key=lambda x: float(x.get("google_rating", 0) or 0), reverse=True)
     else:
@@ -204,6 +355,7 @@ def display_attractions(attractions: List[Dict[str, Any]]) -> None:
 
     for attr in filtered:
         display_attraction_card(attr, compact=False)
+
 
 def display_evaluation(evaluation: Dict[str, Any]) -> None:
     if not evaluation:
@@ -270,6 +422,7 @@ def display_evaluation(evaluation: Dict[str, Any]) -> None:
     )
     st.plotly_chart(fig, use_container_width=True)
 
+
 def display_map_view(attractions: List[Dict[str, Any]], city: str) -> None:
     st.markdown(f"### 🗺️ Attractions in {city}")
 
@@ -282,7 +435,7 @@ def display_map_view(attractions: List[Dict[str, Any]], city: str) -> None:
                     "name": attr.get("name", "Unknown"),
                     "lat": loc["lat"],
                     "lon": loc["lng"],
-                    "price": float(attr.get("final_price_estimate", 0) or 0),
+                    "price": float(attr.get("final_price_estimate", attr.get("approx_price_per_person", 0)) or 0),
                     "rating": float(attr.get("google_rating", 0) or 0),
                 }
             )
@@ -316,6 +469,7 @@ def display_map_view(attractions: List[Dict[str, Any]], city: str) -> None:
             st.write(f"Price: €{loc['price']:.2f} | Rating: {loc['rating']}/5")
             st.write("---")
 
+
 def display_detailed_view(data: Any) -> None:
     st.markdown("### 📋 Detailed Data View")
     display_data = to_plain(data)
@@ -330,7 +484,7 @@ def display_detailed_view(data: Any) -> None:
     with col1:
         st.metric("Total Attractions", len(attractions))
     with col2:
-        avg_price = sum(float(a.get("final_price_estimate", 0) or 0) for a in attractions) / max(len(attractions), 1)
+        avg_price = sum(float(a.get("final_price_estimate", a.get("approx_price_per_person", 0)) or 0) for a in attractions) / max(len(attractions), 1)
         st.metric("Average Price", f"€{avg_price:.2f}")
     with col3:
         ratings = [float(a.get("google_rating", 0) or 0) for a in attractions if a.get("google_rating")]
@@ -351,8 +505,9 @@ def display_detailed_view(data: Any) -> None:
         )
         st.plotly_chart(fig, use_container_width=True)
 
+
 def budget_overview(profile: Dict[str, Any], attractions: List[Dict[str, Any]]) -> Tuple[float, float, float, go.Figure]:
-    total_cost = sum(float(a.get("final_price_estimate", 0) or 0) for a in attractions)
+    total_cost = sum(float(a.get("final_price_estimate", a.get("approx_price_per_person", 0)) or 0) for a in attractions)
     total_budget = float((profile.get("constraints", {}) or {}).get("budget", 1) or 1)
     remaining_budget = total_budget - total_cost
     usage_percent = (total_cost / total_budget * 100) if total_budget > 0 else 0
