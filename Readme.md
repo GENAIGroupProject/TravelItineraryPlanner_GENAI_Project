@@ -1,103 +1,186 @@
-# Travel Itinerary Project
+# Local AI Travel Planner
+
+A Python-based travel itinerary generator that runs **fully offline** using a **local LLM powered by Ollama**. The application generates customized travel plans based on user input without relying on external APIs.
+
+---
 
 ## Overview
-The **Travel Itinerary Project** is a Python-based application designed to generate personalized travel itineraries using Large Language Models (LLMs). The project leverages **Ollama** to run LLMs locally, ensuring privacy, flexibility, and offline capabilities.
 
-This project demonstrates how to:
-- Set up a Python virtual environment
-- Integrate Ollama with Python
-- Structure a simple AI-powered application
+This project demonstrates how to integrate a locally hosted Large Language Model (LLM) using **Ollama** with a Python application. The system prompts the model to generate a detailed travel itinerary, making it suitable for privacy-focused or offline-first use cases.
+
+Key highlights:
+- Runs entirely on your local machine
+- No internet or paid API required
+- Simple Python interface
+- Easy to extend for other use cases (chatbots, planners, assistants)
+
+---
+
+## System Architecture
+
+The application consists of a Python script that communicates with a locally running Ollama service, which hosts the selected LLM model.
+
+![System Architecture](./image.jpg)
+
+**Architecture Flow:**
+1. User executes the Python application
+2. Python sends a prompt request to the Ollama API (local)
+3. Ollama runs the selected LLM model (e.g., `llama3`)
+4. The generated itinerary is returned to the Python app
+5. Output is displayed in the terminal
 
 ---
 
 ## Prerequisites
-Before starting, ensure you have the following installed:
+
+Ensure the following are installed on your system:
 
 - **Python 3.9+**
-- **Git**
-- **Ollama** (for running LLMs locally)
+- **Ollama** (https://ollama.com)
+- A supported LLM model (e.g., `llama3`)
 
 ---
 
-## Step 1: Install Ollama
+## Installation
 
-### On Linux / macOS
+### 1. Clone the repository
+
 ```bash
-curl -fsSL https://ollama.com/install.sh | sh
+git clone <repository-url>
+cd <project-directory>
 ```
 
-### On Windows
-Download and install Ollama from:
-```
-https://ollama.com/download
+### 2. Create and activate a virtual environment
+
+```bash
+python -m venv venv
+source venv/bin/activate   # macOS/Linux
+venv\Scripts\activate      # Windows
 ```
 
-### Verify Installation
+### 3. Install dependencies
+
+```bash
+pip install -r requirements.txt
+```
+
+### 4. Install and prepare Ollama
+
+Verify Ollama installation:
+
 ```bash
 ollama --version
 ```
 
-### Pull a Model (Example)
+Pull the required model:
+
 ```bash
 ollama pull llama3
 ```
 
 ---
 
-## Step 2: Create a Virtual Environment
+## Usage
 
-Navigate to the project directory and create a virtual environment:
-
-```bash
-python -m venv venv
-```
-
-Activate the virtual environment:
-
-### Linux / macOS
-```bash
-source venv/bin/activate
-```
-
-### Windows
-```bash
-venv\Scripts\activate
-```
-
----
-
-## Step 3: Run `requirements.txt`
-
-Install dependencies:
-
-```bash
-pip install -r requirements.txt
-```
-
----
-
-## Step 4: Run the Application
-
-Ensure Ollama is running in the background:
+Start the Ollama service (if not already running):
 
 ```bash
 ollama serve
 ```
 
-Then execute the project:
+Run the application:
 
 ```bash
 python main.py
 ```
 
+Follow the prompts to generate a personalized travel itinerary.
+
 ---
 
 ## Example Output
 
-```
-Day 1: Explore historic landmarks and local cuisine...
-Day 2: Visit museums and cultural districts...
-Day 3: Relax, shopping, and food experiences...
+![System Architecture](./image2.jpg)
+
+---
+
+## Project Structure
+
+```text
+project/
+├── agents/
+├── pages/
+├── ui/
+├── utils/
+├── logs/
+├── tests/
+├── app.py
+├── config.py
+├── main.py
+├── Readme.md
+└── image.jpg
 ```
 
+---
 
+## Troubleshooting
+
+### Ollama command not found
+- Confirm Ollama is installed and available in your PATH:
+  ```bash
+  ollama --version
+  ```
+- Restart your terminal or reinstall Ollama if necessary.
+
+### Ollama server not running
+- Start the service manually:
+  ```bash
+  ollama serve
+  ```
+- Keep it running while executing the Python script.
+
+### Model not found or pull errors
+- Pull the model explicitly:
+  ```bash
+  ollama pull llama3
+  ```
+- Check available models:
+  ```bash
+  ollama list
+  ```
+
+### Dependencies installation issues
+- Ensure your virtual environment is activated.
+- Reinstall dependencies:
+  ```bash
+  pip install -r requirements.txt
+  ```
+
+### Python version issues
+- Verify Python version:
+  ```bash
+  python --version
+  ```
+- Upgrade if below 3.9.
+
+### Poor or empty responses
+- Test Ollama directly:
+  ```bash
+  ollama run llama3
+  ```
+- Try switching to another supported model.
+
+---
+
+## Future Improvements
+
+- Add a web UI (FastAPI / Streamlit)
+- Support multiple prompt templates
+- Save itineraries to file (PDF/Markdown)
+- Add logging and error handling
+
+---
+
+## License
+
+This project is licensed under the MIT License.
