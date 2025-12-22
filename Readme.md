@@ -100,7 +100,7 @@ Follow the prompts to generate a personalized travel itinerary.
 
 ## Example Output
 
-![System Architecture](./image2.jpg)
+![Example output](./image1.png)
 
 ---
 
